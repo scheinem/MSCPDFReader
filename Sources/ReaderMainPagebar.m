@@ -49,7 +49,7 @@
 
 #pragma mark Constants
 
-#define THUMB_SMALL_GAP 2
+#define THUMB_SMALL_GAP 10
 #define THUMB_SMALL_WIDTH 22
 #define THUMB_SMALL_HEIGHT 28
 
@@ -147,8 +147,8 @@
 		self.backgroundColor = [UIColor clearColor];
 
 		CAGradientLayer *layer = (CAGradientLayer *)self.layer;
-		UIColor *liteColor = [UIColor colorWithWhite:0.82f alpha:0.8f];
-		UIColor *darkColor = [UIColor colorWithWhite:0.32f alpha:0.8f];
+		UIColor *liteColor = [UIColor colorWithWhite:0.32f alpha:1.f];
+		UIColor *darkColor = [UIColor colorWithWhite:0.00f alpha:0.8f];
 		layer.colors = [NSArray arrayWithObjects:(id)liteColor.CGColor, (id)darkColor.CGColor, nil];
 
 		CGRect shadowRect = self.bounds; shadowRect.size.height = 4.0f; shadowRect.origin.y -= shadowRect.size.height;

@@ -52,16 +52,6 @@
 
 #pragma mark Properties
 
-@synthesize guid = _guid;
-@synthesize fileDate = _fileDate;
-@synthesize fileSize = _fileSize;
-@synthesize pageCount = _pageCount;
-@synthesize pageNumber = _pageNumber;
-@synthesize bookmarks = _bookmarks;
-@synthesize lastOpen = _lastOpen;
-@synthesize password = _password;
-@dynamic fileName, fileURL;
-
 #pragma mark ReaderDocument class methods
 
 + (NSString *)GUID
@@ -100,7 +90,7 @@
 	return [pathURL path]; // Path to the application's "~/Library/Application Support" directory
 }
 
-+ (NSString *)relativeFilePath:(NSString *)fullFilePath
++ (NSString *)fileNameForFullFilePath:(NSString *)fullFilePath
 {
 	assert(fullFilePath != nil); // Ensure that the full file path is not nil
 
@@ -110,7 +100,7 @@
 
 	assert(range.location != NSNotFound); // Ensure that the application path is in the full file path
 
-	return [fullFilePath stringByReplacingCharactersInRange:range withString:@""]; // Strip it out
+	return [fullFilePath stringByReplacingCharactersInRange:NSMakeRange(0,range.length+range.location) withString:@""]; // Strip it out
 }
 
 + (NSString *)archiveFilePath:(NSString *)filename
@@ -196,8 +186,6 @@
 
 - (id)initWithFilePath:(NSString *)fullFilePath password:(NSString *)phrase
 {
-	id object = nil; // ReaderDocument object
-
 	if ([ReaderDocument isPDF:fullFilePath] == YES) // File must exist
 	{
 		if ((self = [super init])) // Initialize superclass object first
@@ -209,10 +197,12 @@
 			_bookmarks = [NSMutableIndexSet new]; // Bookmarked pages index set
 
 			_pageNumber = [NSNumber numberWithInteger:1]; // Start on page 1
+            
+            _fileURL = [NSURL fileURLWithPath:fullFilePath];
 
-			_fileName = [ReaderDocument relativeFilePath:fullFilePath]; // File name
+			_fileName = [fullFilePath lastPathComponent]; // File name
 
-			CFURLRef docURLRef = (__bridge CFURLRef)[self fileURL]; // CFURLRef from NSURL
+			CFURLRef docURLRef = (__bridge CFURLRef)_fileURL; // CFURLRef from NSURL
 
 			CGPDFDocumentRef thePDFDocRef = CGPDFDocumentCreateX(docURLRef, _password);
 
@@ -241,28 +231,10 @@
 
 			[self saveReaderDocument]; // Save the ReaderDocument object
 
-			object = self; // Return initialized ReaderDocument object
 		}
 	}
 
-	return object;
-}
-
-- (NSString *)fileName
-{
-	return [_fileName lastPathComponent];
-}
-
-- (NSURL *)fileURL
-{
-	if (_fileURL == nil) // Create and keep the file URL the first time it is requested
-	{
-		NSString *fullFilePath = [[ReaderDocument applicationPath] stringByAppendingPathComponent:_fileName];
-
-		_fileURL = [[NSURL alloc] initFileURLWithPath:fullFilePath isDirectory:NO]; // File URL from full file path
-	}
-
-	return _fileURL;
+	return self;
 }
 
 - (BOOL)archiveWithFileName:(NSString *)filename
@@ -274,7 +246,7 @@
 
 - (void)saveReaderDocument
 {
-	[self archiveWithFileName:[self fileName]];
+	[self archiveWithFileName:self.fileName];
 }
 
 - (void)updateProperties
