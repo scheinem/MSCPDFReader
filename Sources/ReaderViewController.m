@@ -886,33 +886,28 @@
 
 #pragma mark ThumbsViewControllerDelegate methods
 
-- (void)dismissThumbsViewController:(ThumbsViewController *)viewController
-{
+- (void)dismissThumbsViewController:(ThumbsViewController *)viewController {
 	[self updateToolbarBookmarkIcon]; // Update bookmark icon
 
-	[self dismissModalViewControllerAnimated:NO]; // Dismiss
+	[self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)thumbsViewController:(ThumbsViewController *)viewController gotoPage:(NSInteger)page
-{
-	[self showDocumentPage:page]; // Show the page
+- (void)thumbsViewController:(ThumbsViewController *)viewController gotoPage:(NSInteger)page {
+	[self showDocumentPage:page];
 }
 
 #pragma mark ReaderMainPagebarDelegate methods
 
-- (void)pagebar:(ReaderMainPagebar *)pagebar gotoPage:(NSInteger)page
-{
-	[self showDocumentPage:page]; // Show the page
+- (void)pagebar:(ReaderMainPagebar *)pagebar gotoPage:(NSInteger)page {
+	[self showDocumentPage:page];
 }
 
 #pragma mark UIApplication notification methods
 
-- (void)applicationWill:(NSNotification *)notification
-{
-	[document saveReaderDocument]; // Save any ReaderDocument object changes
+- (void)applicationWill:(NSNotification *)notification {
+	[document saveReaderDocument];
 
-	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
-	{
+	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
 		if (printInteraction != nil) [printInteraction dismissAnimated:NO];
 	}
 }
