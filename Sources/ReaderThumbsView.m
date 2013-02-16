@@ -286,8 +286,7 @@
 	}
 }
 
-- (void)reloadThumbsCenterOnIndex:(NSInteger)index
-{
+- (void)reloadThumbsCenterOnIndex:(NSInteger)index {
 	assert(delegate != nil); // Check delegate
 
 	assert(CGSizeEqualToSize(_thumbSize, CGSizeZero) == false);
@@ -309,15 +308,24 @@
 
 	[self updateContentSize:thumbCount]; _thumbCount = thumbCount;
 
-	if (thumbCount > 0) // Have some thumbs
-	{
+	if (thumbCount > 0) {
 		NSInteger boundsHeight = self.bounds.size.height;
 
 		NSInteger maxY = (self.contentSize.height - boundsHeight);
+        maxY--;
+        
+		NSInteger minY = 0;
+        
+        if (maxY < minY) {
+            maxY = minY; // Limits
+        }
 
-		NSInteger minY = 0; maxY--; if (maxY < minY) maxY = minY; // Limits
-
-		if (index < 0) index = 0; else if (index > thumbCount) index = (thumbCount - 1);
+		if (index < 0) {
+           index = 0; 
+        }
+        else if (index > thumbCount) {
+            index = (thumbCount - 1);
+        }
 
 		NSInteger thumbY = ((index / _thumbsX) * _thumbSize.height); // Thumb Y
 

@@ -89,8 +89,7 @@
 	theScrollView.contentSize = CGSizeMake(contentWidth, contentHeight);
 }
 
-- (void)updateScrollViewContentViews
-{
+- (void)updateScrollViewContentViews {
 	[self updateScrollViewContentSize]; // Update the content size
 
 	NSMutableIndexSet *pageSet = [NSMutableIndexSet indexSet]; // Page set
@@ -103,30 +102,31 @@
 	];
 
 	__block CGRect viewRect = CGRectZero; viewRect.size = theScrollView.bounds.size;
-
-	__block CGPoint contentOffset = CGPointZero; NSInteger page = [document.pageNumber integerValue];
+	__block CGPoint contentOffset = CGPointZero;
+    NSUInteger page = [document.pageNumber unsignedIntegerValue];
 
 	[pageSet enumerateIndexesUsingBlock: // Enumerate page number set
-		^(NSUInteger number, BOOL *stop)
-		{
+		^(NSUInteger number, BOOL *stop) {
 			NSNumber *key = [NSNumber numberWithInteger:number]; // # key
 
 			ReaderContentView *contentView = [contentViews objectForKey:key];
 
-			contentView.frame = viewRect; if (page == number) contentOffset = viewRect.origin;
+			contentView.frame = viewRect;
+            
+            if (page == number) {
+                contentOffset = viewRect.origin;
+            }
 
 			viewRect.origin.x += viewRect.size.width; // Next view frame position
 		}
 	];
 
-	if (CGPointEqualToPoint(theScrollView.contentOffset, contentOffset) == false)
-	{
+	if (CGPointEqualToPoint(theScrollView.contentOffset, contentOffset) == false) {
 		theScrollView.contentOffset = contentOffset; // Update content offset
 	}
 }
 
-- (void)updateToolbarBookmarkIcon
-{
+- (void)updateToolbarBookmarkIcon {
 	NSInteger page = [document.pageNumber integerValue];
 
 	BOOL bookmarked = [document.bookmarks containsIndex:page];
@@ -134,23 +134,20 @@
 	[mainToolbar setBookmarkState:bookmarked]; // Update
 }
 
-- (void)showDocumentPage:(NSInteger)page
-{
-	if (page != currentPage) // Only if different
-	{
+- (void)showDocumentPage:(NSInteger)page {
+    
+	if (page != currentPage) {
 		NSInteger minValue; NSInteger maxValue;
 		NSInteger maxPage = [document.pageCount integerValue];
 		NSInteger minPage = 1;
 
 		if ((page < minPage) || (page > maxPage)) return;
 
-		if (maxPage <= PAGING_VIEWS) // Few pages
-		{
+		if (maxPage <= PAGING_VIEWS) {
 			minValue = minPage;
 			maxValue = maxPage;
 		}
-		else // Handle more pages
-		{
+		else {
 			minValue = (page - 1);
 			maxValue = (page + 1);
 
@@ -770,7 +767,7 @@
 	thumbsViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
 	thumbsViewController.modalPresentationStyle = UIModalPresentationFullScreen;
 
-	[self presentModalViewController:thumbsViewController animated:NO];
+	[self presentViewController:thumbsViewController animated:NO completion:nil];
 }
 
 - (void)tappedInToolbar:(ReaderMainToolbar *)toolbar printButton:(UIButton *)button
@@ -854,7 +851,7 @@
 
 			mailComposer.mailComposeDelegate = self; // Set the delegate
 
-			[self presentModalViewController:mailComposer animated:YES];
+			[self presentViewController:mailComposer animated:YES completion:nil];
 		}
 	}
 
@@ -879,13 +876,12 @@
 
 #pragma mark MFMailComposeViewControllerDelegate methods
 
-- (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
-{
+- (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error {
 	#ifdef DEBUG
 		if ((result == MFMailComposeResultFailed) && (error != NULL)) NSLog(@"%@", error);
 	#endif
 
-	[self dismissModalViewControllerAnimated:YES]; // Dismiss
+	[self dismissViewControllerAnimated:YES completion:nil];
 }
 
 #pragma mark ThumbsViewControllerDelegate methods
