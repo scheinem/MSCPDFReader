@@ -78,7 +78,7 @@
 
 - (void)updateScrollViewContentSize
 {
-	NSInteger count = [document.pageCount integerValue];
+	NSInteger count = document.pageCount;
 
 	if (count > PAGING_VIEWS) count = PAGING_VIEWS; // Limit
 
@@ -103,7 +103,7 @@
 
 	__block CGRect viewRect = CGRectZero; viewRect.size = theScrollView.bounds.size;
 	__block CGPoint contentOffset = CGPointZero;
-    NSUInteger page = [document.pageNumber unsignedIntegerValue];
+    NSUInteger page = [document.lastPageNumber unsignedIntegerValue];
 
 	[pageSet enumerateIndexesUsingBlock: // Enumerate page number set
 		^(NSUInteger number, BOOL *stop) {
@@ -127,7 +127,7 @@
 }
 
 - (void)updateToolbarBookmarkIcon {
-	NSInteger page = [document.pageNumber integerValue];
+	NSInteger page = [document.lastPageNumber integerValue];
 
 	BOOL bookmarked = [document.bookmarks containsIndex:page];
 
@@ -138,7 +138,7 @@
     
 	if (page != currentPage) {
 		NSInteger minValue; NSInteger maxValue;
-		NSInteger maxPage = [document.pageCount integerValue];
+		NSInteger maxPage = document.pageCount;
 		NSInteger minPage = 1;
 
 		if ((page < minPage) || (page > maxPage)) return;
@@ -225,9 +225,9 @@
 			theScrollView.contentOffset = contentOffset; // Update content offset
 		}
 
-		if ([document.pageNumber integerValue] != page) // Only if different
+		if ([document.lastPageNumber integerValue] != page) // Only if different
 		{
-			document.pageNumber = [NSNumber numberWithInteger:page]; // Update page number
+			document.lastPageNumber = [NSNumber numberWithInteger:page]; // Update page number
 		}
 
 		NSURL *fileURL = document.fileURL; NSString *phrase = document.password; NSString *guid = document.guid;
@@ -268,7 +268,7 @@
 {
 	[self updateScrollViewContentSize]; // Set content size
 
-	[self showDocumentPage:[document.pageNumber integerValue]];
+	[self showDocumentPage:[document.lastPageNumber integerValue]];
 
 	document.lastOpen = [NSDate date]; // Update last opened date
 
@@ -291,7 +291,7 @@
 
 			[notificationCenter addObserver:self selector:@selector(applicationWill:) name:UIApplicationWillResignActiveNotification object:nil];
 
-			[object updateProperties]; document = object; // Retain the supplied ReaderDocument object for our use
+            document = object; // Retain the supplied ReaderDocument object for our use
 
 			[ReaderThumbCache touchThumbCacheWithGUID:object.guid]; // Touch the document thumb cache directory
 
@@ -528,8 +528,8 @@
 {
 	if (theScrollView.tag == 0) // Scroll view did end
 	{
-		NSInteger page = [document.pageNumber integerValue];
-		NSInteger maxPage = [document.pageCount integerValue];
+		NSInteger page = [document.lastPageNumber integerValue];
+		NSInteger maxPage = document.pageCount;
 		NSInteger minPage = 1; // Minimum
 
 		if ((maxPage > minPage) && (page != minPage))
@@ -549,8 +549,8 @@
 {
 	if (theScrollView.tag == 0) // Scroll view did end
 	{
-		NSInteger page = [document.pageNumber integerValue];
-		NSInteger maxPage = [document.pageCount integerValue];
+		NSInteger page = [document.lastPageNumber integerValue];
+		NSInteger maxPage = document.pageCount;
 		NSInteger minPage = 1; // Minimum
 
 		if ((maxPage > minPage) && (page != maxPage))
@@ -578,7 +578,7 @@
 
 		if (CGRectContainsPoint(areaRect, point)) // Single tap is inside the area
 		{
-			NSInteger page = [document.pageNumber integerValue]; // Current page #
+			NSInteger page = [document.lastPageNumber integerValue]; // Current page #
 
 			NSNumber *key = [NSNumber numberWithInteger:page]; // Page number key
 
@@ -666,7 +666,7 @@
 
 		if (CGRectContainsPoint(zoomArea, point)) // Double tap is in the zoom area
 		{
-			NSInteger page = [document.pageNumber integerValue]; // Current page #
+			NSInteger page = [document.lastPageNumber integerValue]; // Current page #
 
 			NSNumber *key = [NSNumber numberWithInteger:page]; // Page number key
 
@@ -830,7 +830,7 @@
 
 	if (printInteraction != nil) [printInteraction dismissAnimated:YES];
 
-	unsigned long long fileSize = [document.fileSize unsignedLongLongValue];
+	unsigned long long fileSize = document.fileSize;
 
 	if (fileSize < (unsigned long long)15728640) // Check attachment size limit (15MB)
 	{
@@ -862,7 +862,7 @@
 {
 	if (printInteraction != nil) [printInteraction dismissAnimated:YES];
 
-	NSInteger page = [document.pageNumber integerValue];
+	NSInteger page = [document.lastPageNumber integerValue];
 
 	if ([document.bookmarks containsIndex:page]) // Remove bookmark
 	{

@@ -80,7 +80,7 @@
 
 - (void)updatePageThumbView:(NSInteger)page
 {
-	NSInteger pages = [document.pageCount integerValue];
+	NSInteger pages = document.pageCount;
 
 	if (pages > 1) // Only update frame if more than one page
 	{
@@ -122,7 +122,7 @@
 {
 	if (page != pageNumberLabel.tag) // Only if page number changed
 	{
-		NSInteger pages = [document.pageCount integerValue]; // Total pages
+		NSInteger pages = document.pageCount; // Total pages
 
 		NSString *format = NSLocalizedString(@"%d of %d", @"format"); // Format
 
@@ -203,7 +203,7 @@
 
 		document = object; // Retain the document object for our use
 
-		[self updatePageNumberText:[document.pageNumber integerValue]];
+		[self updatePageNumberText:[document.lastPageNumber integerValue]];
 
 		miniThumbViews = [NSMutableDictionary new]; // Small thumbs
 	}
@@ -226,7 +226,7 @@
 
 	NSInteger thumbs = (controlRect.size.width / thumbWidth);
 
-	NSInteger pages = [document.pageCount integerValue]; // Pages
+	NSInteger pages = document.pageCount; // Pages
 
 	if (thumbs > pages) thumbs = pages; // No more than total pages
 
@@ -255,7 +255,7 @@
 		[trackControl addSubview:pageThumbView]; // Add as the first subview of the track control
 	}
 
-	[self updatePageThumbView:[document.pageNumber integerValue]]; // Update page thumb view
+	[self updatePageThumbView:[document.lastPageNumber integerValue]]; // Update page thumb view
 
 	NSInteger strideThumbs = (thumbs - 1); if (strideThumbs < 1) strideThumbs = 1;
 
@@ -316,7 +316,7 @@
 
 - (void)updatePagebarViews
 {
-	NSInteger page = [document.pageNumber integerValue]; // #
+	NSInteger page = [document.lastPageNumber integerValue]; // #
 
 	[self updatePageNumberText:page]; // Update page number text
 
@@ -373,7 +373,7 @@
 {
 	[trackTimer invalidate]; trackTimer = nil; // Cleanup timer
 
-	if (trackControl.tag != [document.pageNumber integerValue]) // Only if different
+	if (trackControl.tag != [document.lastPageNumber integerValue]) // Only if different
 	{
 		[delegate pagebar:self gotoPage:trackControl.tag]; // Go to document page
 	}
@@ -404,7 +404,7 @@
 {
 	CGFloat controlWidth = trackView.bounds.size.width; // View width
 
-	CGFloat stride = (controlWidth / [document.pageCount integerValue]);
+	CGFloat stride = (controlWidth / document.pageCount);
 
 	NSInteger page = (trackView.value / stride); // Integer page number
 
@@ -415,7 +415,7 @@
 {
 	NSInteger page = [self trackViewPageNumber:trackView]; // Page
 
-	if (page != [document.pageNumber integerValue]) // Only if different
+	if (page != [document.lastPageNumber integerValue]) // Only if different
 	{
 		[self updatePageNumberText:page]; // Update page number text
 
@@ -447,7 +447,7 @@
 {
 	[trackTimer invalidate]; trackTimer = nil; // Cleanup
 
-	if (trackView.tag != [document.pageNumber integerValue]) // Only if different
+	if (trackView.tag != [document.lastPageNumber integerValue]) // Only if different
 	{
 		trackView.userInteractionEnabled = NO; // Disable track control interaction
 

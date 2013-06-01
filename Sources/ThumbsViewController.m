@@ -134,7 +134,7 @@
 {
 	[super viewWillAppear:animated];
 
-	[theThumbsView reloadThumbsCenterOnIndex:([document.pageNumber integerValue] - 1)]; // Page
+	[theThumbsView reloadThumbsCenterOnIndex:([document.lastPageNumber integerValue] - 1)]; // Page
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -245,7 +245,7 @@
 
 - (NSUInteger)numberOfThumbsInThumbsView:(ReaderThumbsView *)thumbsView
 {
-	return (showBookmarked ? bookmarked.count : [document.pageCount integerValue]);
+	return (showBookmarked ? bookmarked.count : document.pageCount);
 }
 
 - (id)thumbsView:(ReaderThumbsView *)thumbsView thumbCellWithFrame:(CGRect)frame

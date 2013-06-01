@@ -150,7 +150,7 @@
 
 		if ([MFMailComposeViewController canSendMail] == YES) // Can email
 		{
-			unsigned long long fileSize = [object.fileSize unsignedLongLongValue];
+			unsigned long long fileSize = object.fileSize;
 
 			if (fileSize < (unsigned long long)15728640) // Check attachment size limit (15MB)
 			{
