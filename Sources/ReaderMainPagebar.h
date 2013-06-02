@@ -40,7 +40,7 @@
 
 @end
 
-@interface ReaderMainPagebar : UIView
+@interface ReaderMainPagebar : UIToolbar
 
 @property (nonatomic, unsafe_unretained, readwrite) id <ReaderMainPagebarDelegate> delegate;
 

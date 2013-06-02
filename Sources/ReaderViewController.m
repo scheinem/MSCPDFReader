@@ -766,8 +766,10 @@
 
 	thumbsViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
 	thumbsViewController.modalPresentationStyle = UIModalPresentationFullScreen;
+    
+    UINavigationController *thumbsViewNavigationController = [[UINavigationController alloc] initWithRootViewController:thumbsViewController];
 
-	[self presentViewController:thumbsViewController animated:NO completion:nil];
+	[self presentViewController:thumbsViewNavigationController animated:NO completion:nil];
 }
 
 - (void)tappedInToolbar:(ReaderMainToolbar *)toolbar printButton:(UIButton *)button

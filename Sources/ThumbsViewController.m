@@ -29,17 +29,13 @@
 #import "ReaderThumbCache.h"
 #import "ReaderDocument.h"
 
-#import <QuartzCore/QuartzCore.h>
-
-@interface ThumbsViewController () <ThumbsMainToolbarDelegate, ReaderThumbsViewDelegate>
+@interface ThumbsViewController () <ReaderThumbsViewDelegate>
 
 @end
 
 @implementation ThumbsViewController
 {
 	ReaderDocument *document;
-
-	ThumbsMainToolbar *mainToolbar;
 
 	ReaderThumbsView *theThumbsView;
 
@@ -52,16 +48,49 @@
 	BOOL showBookmarked;
 }
 
-#pragma mark Constants
-
-#define TOOLBAR_HEIGHT 44.0f
-
-#define PAGE_THUMB_SMALL 160
-#define PAGE_THUMB_LARGE 256
-
 #pragma mark Properties
 
 @synthesize delegate;
+
+
+
+
+- (void)doneButtonTouchedUpInside:(UIBarButtonItem *)doneButton {
+    [self dismissViewControllerAnimated:YES completion:^{
+    }];
+}
+
+- (void)showControlTapped:(UISegmentedControl *)control {
+	switch (control.selectedSegmentIndex) {
+		case 0: {
+			showBookmarked = NO;
+			markedOffset = [theThumbsView insetContentOffset];
+			[theThumbsView reloadThumbsContentOffset:thumbsOffset];
+			break;
+		}
+            
+		case 1: {
+			showBookmarked = YES;
+			thumbsOffset = [theThumbsView insetContentOffset];
+            
+			if (updateBookmarked == YES) {
+				[bookmarked removeAllObjects];
+                
+				[document.bookmarks enumerateIndexesUsingBlock:
+                 ^(NSUInteger page, BOOL *stop){
+                     [bookmarked addObject:[NSNumber numberWithInteger:page]];
+                }];
+                
+				markedOffset = CGPointZero; updateBookmarked = NO; // Reset
+			}
+            
+			[theThumbsView reloadThumbsContentOffset:markedOffset];
+            
+			break;
+		}
+	}
+}
+
 
 #pragma mark UIViewController methods
 
@@ -91,28 +120,39 @@
 	assert(delegate != nil); assert(document != nil);
 
 	self.view.backgroundColor = [UIColor scrollViewTexturedBackgroundColor];
+    
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Fertig" style:UIBarButtonItemStyleBordered target:self action:@selector(doneButtonTouchedUpInside:)];
+    self.title = [document.fileName stringByDeletingPathExtension];
+    
+#if (READER_BOOKMARKS == TRUE) // Option
+    
+    UIImage *thumbsImage = [UIImage imageNamed:@"Reader-Thumbs"];
+    UIImage *bookmarkImage = [UIImage imageNamed:@"Reader-Mark-Y"];
+    NSArray *buttonItems = [NSArray arrayWithObjects:thumbsImage, bookmarkImage, nil];
+    UISegmentedControl *showControl = [[UISegmentedControl alloc] initWithItems:buttonItems];
+    
+    showControl.segmentedControlStyle = UISegmentedControlStyleBar;
+    showControl.selectedSegmentIndex = 0; // Default segment index
+    
+    [showControl addTarget:self action:@selector(showControlTapped:) forControlEvents:UIControlEventValueChanged];
+    
+    UIBarButtonItem *segmentBarItem = [[UIBarButtonItem alloc] initWithCustomView:showControl];
+    self.navigationItem.rightBarButtonItem = segmentBarItem;
+    
+#endif // end of READER_BOOKMARKS Option
+    
 
 	CGRect viewRect = self.view.bounds; // View controller's view bounds
-
-	NSString *toolbarTitle = [document.fileName stringByDeletingPathExtension];
-
-	CGRect toolbarRect = viewRect; toolbarRect.size.height = TOOLBAR_HEIGHT;
-
-	mainToolbar = [[ThumbsMainToolbar alloc] initWithFrame:toolbarRect title:toolbarTitle]; // At top
-
-	mainToolbar.delegate = self;
-
-	[self.view addSubview:mainToolbar];
 
 	CGRect thumbsRect = viewRect; UIEdgeInsets insets = UIEdgeInsetsZero;
 
 	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
 	{
-		thumbsRect.origin.y += TOOLBAR_HEIGHT; thumbsRect.size.height -= TOOLBAR_HEIGHT;
+		thumbsRect.origin.y += 40.f; thumbsRect.size.height -= 0.f;
 	}
 	else // Set UIScrollView insets for non-UIUserInterfaceIdiomPad case
 	{
-		insets.top = TOOLBAR_HEIGHT;
+		insets.top = 40.f;
 	}
 
 	theThumbsView = [[ReaderThumbsView alloc] initWithFrame:thumbsRect]; // Rest
@@ -120,12 +160,19 @@
 	theThumbsView.contentInset = insets; theThumbsView.scrollIndicatorInsets = insets;
 
 	theThumbsView.delegate = self;
+    
+    theThumbsView.backgroundColor = [UIColor yellowColor];
+    
+    [self.view addSubview:theThumbsView];
+    
+    NSInteger thumbSize = 0;
 
-	[self.view insertSubview:theThumbsView belowSubview:mainToolbar];
-
-	BOOL large = ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad);
-
-	NSInteger thumbSize = (large ? PAGE_THUMB_LARGE : PAGE_THUMB_SMALL); // Thumb dimensions
+	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+        thumbSize = self.view.bounds.size.width / 4.f;
+    }
+    else {
+        thumbSize = self.view.bounds.size.width / 2.f;
+    }
 
 	[theThumbsView setThumbSize:CGSizeMake(thumbSize, thumbSize)]; // Thumb size based on device
 }
@@ -137,108 +184,9 @@
 	[theThumbsView reloadThumbsCenterOnIndex:([document.lastPageNumber integerValue] - 1)]; // Page
 }
 
-- (void)viewDidAppear:(BOOL)animated
-{
-	[super viewDidAppear:animated];
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-	[super viewWillDisappear:animated];
-}
-
-- (void)viewDidDisappear:(BOOL)animated
-{
-	[super viewDidDisappear:animated];
-}
-
-- (void)viewDidUnload
-{
-#ifdef DEBUG
-	NSLog(@"%s", __FUNCTION__);
-#endif
-
-	mainToolbar = nil; theThumbsView = nil;
-
-	[super viewDidUnload];
-}
-
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 	return YES;
-}
-
-/*
-- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
-{
-}
-
-- (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration
-{
-}
-
-- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
-{
-	//if (fromInterfaceOrientation == self.interfaceOrientation) return;
-}
-*/
-
-- (void)didReceiveMemoryWarning
-{
-#ifdef DEBUG
-	NSLog(@"%s", __FUNCTION__);
-#endif
-
-	[super didReceiveMemoryWarning];
-}
-
-#pragma mark ThumbsMainToolbarDelegate methods
-
-- (void)tappedInToolbar:(ThumbsMainToolbar *)toolbar showControl:(UISegmentedControl *)control
-{
-	switch (control.selectedSegmentIndex)
-	{
-		case 0: // Show all page thumbs
-		{
-			showBookmarked = NO; // Show all thumbs
-
-			markedOffset = [theThumbsView insetContentOffset];
-
-			[theThumbsView reloadThumbsContentOffset:thumbsOffset];
-
-			break; // We're done
-		}
-
-		case 1: // Show bookmarked thumbs
-		{
-			showBookmarked = YES; // Only bookmarked
-
-			thumbsOffset = [theThumbsView insetContentOffset];
-
-			if (updateBookmarked == YES) // Update bookmarked list
-			{
-				[bookmarked removeAllObjects]; // Empty the list first
-
-				[document.bookmarks enumerateIndexesUsingBlock: // Enumerate
-					^(NSUInteger page, BOOL *stop)
-					{
-						[bookmarked addObject:[NSNumber numberWithInteger:page]];
-					}
-				];
-
-				markedOffset = CGPointZero; updateBookmarked = NO; // Reset
-			}
-
-			[theThumbsView reloadThumbsContentOffset:markedOffset];
-
-			break; // We're done
-		}
-	}
-}
-
-- (void)tappedInToolbar:(ThumbsMainToolbar *)toolbar doneButton:(UIButton *)button
-{
-	[delegate dismissThumbsViewController:self]; // Dismiss thumbs display
 }
 
 #pragma mark UIThumbsViewDelegate methods
@@ -476,5 +424,16 @@
 {
 	textLabel.text = text;
 }
+
+
+
+
+
+
+
+
+
+
+
 
 @end
