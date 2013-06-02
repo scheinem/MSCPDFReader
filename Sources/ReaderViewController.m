@@ -26,7 +26,6 @@
 #import "ReaderConstants.h"
 #import "ReaderViewController.h"
 #import "ThumbsViewController.h"
-#import "ReaderMainToolbar.h"
 #import "ReaderMainPagebar.h"
 #import "ReaderContentView.h"
 #import "ReaderThumbCache.h"
@@ -35,7 +34,7 @@
 #import <MessageUI/MessageUI.h>
 
 @interface ReaderViewController () <UIScrollViewDelegate, UIGestureRecognizerDelegate, MFMailComposeViewControllerDelegate,
-									ReaderMainToolbarDelegate, ReaderMainPagebarDelegate, ReaderContentViewDelegate, ThumbsViewControllerDelegate>
+                                    ReaderMainPagebarDelegate, ReaderContentViewDelegate, ThumbsViewControllerDelegate>
 @end
 
 @implementation ReaderViewController
@@ -43,8 +42,6 @@
 	ReaderDocument *document;
 
 	UIScrollView *theScrollView;
-
-	ReaderMainToolbar *mainToolbar;
 
 	ReaderMainPagebar *mainPagebar;
 
@@ -55,8 +52,6 @@
 	NSInteger currentPage;
 
 	CGSize lastAppearSize;
-
-	NSDate *lastHideTime;
 
 	BOOL isVisible;
 }
@@ -131,7 +126,8 @@
 
 	BOOL bookmarked = [document.bookmarks containsIndex:page];
 
-	[mainToolbar setBookmarkState:bookmarked]; // Update
+    // TODO
+	//[mainToolbar setBookmarkState:bookmarked]; // Update
 }
 
 - (void)showDocumentPage:(NSInteger)page {
@@ -302,9 +298,73 @@
 	return reader;
 }
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
 	[super viewDidLoad];
+    
+    if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+        self.title = document.fileName ;
+    }
+    
+    
+    NSMutableArray *leftBarButtons = [NSMutableArray array];
+    
+#if (READER_STANDALONE == FALSE)
+    
+    UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Done", @"button") style:UIBarButtonItemStyleBordered target:self action:@selector(doneButtonPressed:)];
+    [leftBarButtons addObject:doneButton];
+    
+#endif
+    
+#if (READER_ENABLE_THUMBS == TRUE)
+    
+    UIBarButtonItem *thumsButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"Reader-Thumbs"] style:UIBarButtonItemStyleBordered target:self action:@selector(thumbsButtonPressed:)];
+    [leftBarButtons addObject:thumsButton];
+    
+#endif
+    
+    self.navigationItem.leftBarButtonItems = leftBarButtons;
+    
+    NSMutableArray *rightBarButtons = [NSMutableArray array];
+    
+#if (READER_BOOKMARKS == TRUE)
+    
+    UIBarButtonItem *bookmarkButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"Reader-Mark-N"] style:UIBarButtonItemStyleBordered target:self action:@selector(bookmarkButtonPressed:)];
+    [rightBarButtons addObject:bookmarkButton];
+    
+#endif
+    
+#if (READER_ENABLE_MAIL == TRUE)
+    
+    if ([MFMailComposeViewController canSendMail] == YES) {
+        unsigned long long fileSize = document.fileSize;
+        
+        // Check mail-attachement size 15MB
+        if (fileSize < (unsigned long long)15728640) {
+            UIBarButtonItem *mailButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"Reader-Email"] style:UIBarButtonItemStyleBordered target:self action:@selector(mailButtonPressed:)];
+            [rightBarButtons addObject:mailButton];
+        }
+    }
+    
+#endif
+    
+#if (READER_ENABLE_PRINT == TRUE)
+    
+    // We can only print documents without passwords
+    if (document.password == nil)  {
+        Class printInteractionController = NSClassFromString(@"UIPrintInteractionController");
+        
+        if ((printInteractionController != nil) && [printInteractionController isPrintingAvailable]) {
+            UIBarButtonItem *printButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"Reader-Print"] style:UIBarButtonItemStyleBordered target:self action:@selector(printButtonPressed:)];
+            [rightBarButtons addObject:printButton];
+        }
+    }
+    
+#endif
+    
+    self.navigationItem.rightBarButtonItems = rightBarButtons;
+    
+    
+    
 
 	assert(document != nil); // Must have a valid ReaderDocument
 
@@ -327,16 +387,6 @@
 	theScrollView.delegate = self;
 
 	[self.view addSubview:theScrollView];
-
-	CGRect toolbarRect = viewRect;
-	toolbarRect.size.height = TOOLBAR_HEIGHT;
-
-	mainToolbar = [[ReaderMainToolbar alloc] initWithFrame:toolbarRect document:document]; // At top
-
-	mainToolbar.delegate = self;
-
-	[self.view addSubview:mainToolbar];
-
 	CGRect pagebarRect = viewRect;
 	pagebarRect.size.height = PAGEBAR_HEIGHT;
 	pagebarRect.origin.y = (viewRect.size.height - PAGEBAR_HEIGHT);
@@ -361,7 +411,7 @@
 
 	[singleTapOne requireGestureRecognizerToFail:doubleTapOne]; // Single tap requires double tap to fail
 
-	contentViews = [NSMutableDictionary new]; lastHideTime = [NSDate date];
+	contentViews = [NSMutableDictionary new];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -377,21 +427,16 @@
 
 		lastAppearSize = CGSizeZero; // Reset view size tracking
 	}
-}
-
-- (void)viewDidAppear:(BOOL)animated
-{
-	[super viewDidAppear:animated];
-
+    
 	if (CGSizeEqualToSize(theScrollView.contentSize, CGSizeZero)) // First time
 	{
 		[self performSelector:@selector(showDocument:) withObject:nil afterDelay:0.02];
 	}
-
+    
 #if (READER_DISABLE_IDLE == TRUE) // Option
-
+    
 	[UIApplication sharedApplication].idleTimerDisabled = YES;
-
+    
 #endif // end of READER_DISABLE_IDLE Option
 }
 
@@ -408,20 +453,15 @@
 #endif // end of READER_DISABLE_IDLE Option
 }
 
-- (void)viewDidDisappear:(BOOL)animated
-{
-	[super viewDidDisappear:animated];
-}
-
 - (void)viewDidUnload
 {
 #ifdef DEBUG
 	NSLog(@"%s", __FUNCTION__);
 #endif
 
-	mainToolbar = nil; mainPagebar = nil;
+	mainPagebar = nil;
 
-	theScrollView = nil; contentViews = nil; lastHideTime = nil;
+	theScrollView = nil; contentViews = nil;
 
 	lastAppearSize = CGSizeZero; currentPage = 0;
 
@@ -468,15 +508,6 @@
 	//if (fromInterfaceOrientation == self.interfaceOrientation) return;
 }
 */
-
-- (void)didReceiveMemoryWarning
-{
-#ifdef DEBUG
-	NSLog(@"%s", __FUNCTION__);
-#endif
-
-	[super didReceiveMemoryWarning];
-}
 
 - (void)dealloc
 {
@@ -621,15 +652,8 @@
 					}
 				}
 			}
-			else // Nothing active tapped in the target content view
-			{
-				if ([lastHideTime timeIntervalSinceNow] < -0.75) // Delay since hide
-				{
-					if ((mainToolbar.hidden == YES) || (mainPagebar.hidden == YES))
-					{
-						[mainToolbar showToolbar]; [mainPagebar showPagebar]; // Show
-					}
-				}
+			else {
+				[self toggleVisibilityOfBars];
 			}
 
 			return;
@@ -709,32 +733,21 @@
 
 #pragma mark ReaderContentViewDelegate methods
 
-- (void)contentView:(ReaderContentView *)contentView touchesBegan:(NSSet *)touches
-{
-	if ((mainToolbar.hidden == NO) || (mainPagebar.hidden == NO))
-	{
-		if (touches.count == 1) // Single touches only
-		{
-			UITouch *touch = [touches anyObject]; // Touch info
+- (void)contentView:(ReaderContentView *)contentView touchesBegan:(NSSet *)touches {
+    if (touches.count == 1) {
+        UITouch *touch = [touches anyObject]; // Touch info
+        CGPoint point = [touch locationInView:self.view]; // Touch location
+        CGRect areaRect = CGRectInset(self.view.bounds, TAP_AREA_SIZE, TAP_AREA_SIZE);
 
-			CGPoint point = [touch locationInView:self.view]; // Touch location
-
-			CGRect areaRect = CGRectInset(self.view.bounds, TAP_AREA_SIZE, TAP_AREA_SIZE);
-
-			if (CGRectContainsPoint(areaRect, point) == false) return;
-		}
-
-		[mainToolbar hideToolbar]; [mainPagebar hidePagebar]; // Hide
-
-		lastHideTime = [NSDate date];
-	}
+        if (CGRectContainsPoint(areaRect, point) == false) {
+            return;
+        }
+    }
 }
 
 #pragma mark ReaderMainToolbarDelegate methods
 
-- (void)tappedInToolbar:(ReaderMainToolbar *)toolbar doneButton:(UIButton *)button
-{
-#if (READER_STANDALONE == FALSE) // Option
+- (void)doneButtonPressed:(UIBarButtonItem *)doneButton {
 
 	[document saveReaderDocument]; // Save any ReaderDocument object changes
 
@@ -742,39 +755,31 @@
 
 	[[ReaderThumbCache sharedInstance] removeAllObjects]; // Empty the thumb cache
 
-	if (printInteraction != nil) [printInteraction dismissAnimated:NO]; // Dismiss
-
-	if ([delegate respondsToSelector:@selector(dismissReaderViewController:)] == YES)
-	{
-		[delegate dismissReaderViewController:self]; // Dismiss the ReaderViewController
-	}
-	else // We have a "Delegate must respond to -dismissReaderViewController: error"
-	{
-		NSAssert(NO, @"Delegate must respond to -dismissReaderViewController:");
-	}
-
-#endif // end of READER_STANDALONE Option
+	if (printInteraction != nil) {
+        [printInteraction dismissAnimated:NO];
+    }
+    
+    [self dismissViewControllerAnimated:YES completion:^{
+    }];
 }
 
-- (void)tappedInToolbar:(ReaderMainToolbar *)toolbar thumbsButton:(UIButton *)button
-{
-	if (printInteraction != nil) [printInteraction dismissAnimated:NO]; // Dismiss
+- (void)thumbsButtonPressed:(UIBarButtonItem *)thumbsButton {
+	if (printInteraction != nil) {
+        [printInteraction dismissAnimated:NO];
+    }
 
 	ThumbsViewController *thumbsViewController = [[ThumbsViewController alloc] initWithReaderDocument:document];
 
-	thumbsViewController.delegate = self; thumbsViewController.title = self.title;
+	thumbsViewController.delegate = self;
 
 	thumbsViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
-	thumbsViewController.modalPresentationStyle = UIModalPresentationFullScreen;
     
     UINavigationController *thumbsViewNavigationController = [[UINavigationController alloc] initWithRootViewController:thumbsViewController];
 
-	[self presentViewController:thumbsViewNavigationController animated:NO completion:nil];
+	[self presentViewController:thumbsViewNavigationController animated:YES completion:nil];
 }
 
-- (void)tappedInToolbar:(ReaderMainToolbar *)toolbar printButton:(UIButton *)button
-{
-#if (READER_ENABLE_PRINT == TRUE) // Option
+- (void)printButtonPressed:(UIBarButtonItem *)printButton {
 
 	Class printInteractionController = NSClassFromString(@"UIPrintInteractionController");
 
@@ -798,7 +803,7 @@
 
 			if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
 			{
-				[printInteraction presentFromRect:button.bounds inView:button animated:YES completionHandler:
+				[printInteraction presentFromBarButtonItem:printButton animated:YES completionHandler:
 					^(UIPrintInteractionController *pic, BOOL completed, NSError *error)
 					{
 						#ifdef DEBUG
@@ -820,13 +825,9 @@
 			}
 		}
 	}
-
-#endif // end of READER_ENABLE_PRINT Option
 }
 
-- (void)tappedInToolbar:(ReaderMainToolbar *)toolbar emailButton:(UIButton *)button
-{
-#if (READER_ENABLE_MAIL == TRUE) // Option
+- (void)mailButtonPressed:(UIBarButtonItem *)mailButton {
 
 	if ([MFMailComposeViewController canSendMail] == NO) return;
 
@@ -856,23 +857,22 @@
 			[self presentViewController:mailComposer animated:YES completion:nil];
 		}
 	}
-
-#endif // end of READER_ENABLE_MAIL Option
 }
 
-- (void)tappedInToolbar:(ReaderMainToolbar *)toolbar markButton:(UIButton *)button
-{
+- (void)bookmarkButtonPressed:(UIBarButtonItem *)bookmarkButton {
 	if (printInteraction != nil) [printInteraction dismissAnimated:YES];
 
 	NSInteger page = [document.lastPageNumber integerValue];
 
 	if ([document.bookmarks containsIndex:page]) // Remove bookmark
 	{
-		[mainToolbar setBookmarkState:NO]; [document.bookmarks removeIndex:page];
+        // TODO
+		//[mainToolbar setBookmarkState:NO]; [document.bookmarks removeIndex:page];
 	}
 	else // Add the bookmarked page index to the bookmarks set
 	{
-		[mainToolbar setBookmarkState:YES]; [document.bookmarks addIndex:page];
+        // TODO
+		//[mainToolbar setBookmarkState:YES]; [document.bookmarks addIndex:page];
 	}
 }
 
@@ -913,5 +913,90 @@
 		if (printInteraction != nil) [printInteraction dismissAnimated:NO];
 	}
 }
+
+
+
+
+
+
+
+
+
+
+- (void)toggleVisibilityOfBars {
+    if (self.navigationController.navigationBar.hidden && mainPagebar.hidden) {
+        [self showBars];
+    }
+    else {
+        [self hideBars];
+    }
+}
+
+
+- (void)hideBars {
+    [UIView animateWithDuration:0.25 delay:0.0
+                        options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction
+                     animations:^(void) {
+        self.navigationController.navigationBar.alpha = 0.f;
+        mainPagebar.alpha = 0.f;
+    }                completion:^(BOOL finished) {
+        self.navigationController.navigationBar.hidden = YES;
+        mainPagebar.hidden = YES;
+    }];
+}
+
+- (void)showBars {
+    [UIView animateWithDuration:0.25 delay:0.0
+                        options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction
+                     animations:^(void) {
+        self.navigationController.navigationBar.hidden = NO;
+        self.navigationController.navigationBar.alpha = 1.f;
+        mainPagebar.hidden = NO;
+        mainPagebar.alpha = 1.f;
+    } completion:nil];
+}
+
+
+
+
+
+/*- (void)setBookmarkState:(BOOL)state
+{
+#if (READER_BOOKMARKS == TRUE) // Option
+    
+	if (state != markButton.tag) // Only if different state
+	{
+		if (self.hidden == NO) // Only if toolbar is visible
+		{
+			UIImage *image = (state ? markImageY : markImageN);
+            
+			[markButton setImage:image forState:UIControlStateNormal];
+		}
+        
+		markButton.tag = state; // Update bookmarked state tag
+	}
+    
+	if (markButton.enabled == NO) markButton.enabled = YES;
+    
+#endif // end of READER_BOOKMARKS Option
+}
+
+- (void)updateBookmarkImage
+{
+#if (READER_BOOKMARKS == TRUE) // Option
+    
+	if (markButton.tag != NSIntegerMin) // Valid tag
+	{
+		BOOL state = markButton.tag; // Bookmarked state
+        
+		UIImage *image = (state ? markImageY : markImageN);
+        
+		[markButton setImage:image forState:UIControlStateNormal];
+	}
+    
+	if (markButton.enabled == NO) markButton.enabled = YES;
+    
+#endif // end of READER_BOOKMARKS Option
+}*/
 
 @end

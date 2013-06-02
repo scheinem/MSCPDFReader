@@ -192,8 +192,8 @@
 
 		readerViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
 		readerViewController.modalPresentationStyle = UIModalPresentationFullScreen;
-
-		[self presentModalViewController:readerViewController animated:YES];
+        
+		[self presentModalViewController:[[UINavigationController alloc] initWithRootViewController:readerViewController] animated:YES];
 
 #endif // DEMO_VIEW_CONTROLLER_PUSH
 	}

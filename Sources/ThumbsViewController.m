@@ -161,8 +161,6 @@
 
 	theThumbsView.delegate = self;
     
-    theThumbsView.backgroundColor = [UIColor yellowColor];
-    
     [self.view addSubview:theThumbsView];
     
     NSInteger thumbSize = 0;
@@ -233,7 +231,8 @@
 
 	[delegate thumbsViewController:self gotoPage:page]; // Show the selected page
 
-	[delegate dismissThumbsViewController:self]; // Dismiss thumbs display
+    [self dismissViewControllerAnimated:YES completion:^{
+    }];
 }
 
 - (void)thumbsView:(ReaderThumbsView *)thumbsView didPressThumbWithIndex:(NSInteger)index
