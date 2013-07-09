@@ -39,7 +39,7 @@
 @property (nonatomic, strong, readonly) NSURL *fileURL;
 
 + (ReaderDocument *)pdfFromFilePath:(NSString *)filePath;
-+ (ReaderDocument *)pdfFromFilePath:(NSString *)filePath password:(NSString *)phrase;
++ (ReaderDocument *)pdfFromFilePath:(NSString *)filePath password:(NSString *)phrase ignoreStoredMetadata:(BOOL)ignore;
 
 - (BOOL)saveReaderDocument;
 

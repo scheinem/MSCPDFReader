@@ -79,10 +79,10 @@
 }
 
 + (ReaderDocument *)pdfFromFilePath:(NSString *)filePath {
-    return [ReaderDocument pdfFromFilePath:filePath password:nil];
+    return [ReaderDocument pdfFromFilePath:filePath password:nil ignoreStoredMetadata:NO];
 }
 
-+ (ReaderDocument *)pdfFromFilePath:(NSString *)filePath password:(NSString *)phrase {
++ (ReaderDocument *)pdfFromFilePath:(NSString *)filePath password:(NSString *)phrase ignoreStoredMetadata:(BOOL)ignore {
     
     if (![ReaderDocument isPDF:filePath]) {
         return nil;
@@ -92,21 +92,23 @@
     
 	NSString *archiveFilePath = [ReaderDocument archiveFilePathForFileNamed:[filePath lastPathComponent]];
     
-	@try // Unarchive an archived ReaderDocument object from its property list
-	{
-		document = [NSKeyedUnarchiver unarchiveObjectWithFile:archiveFilePath];
+    if (!ignore) {
+        @try // Unarchive an archived ReaderDocument object from its property list
+        {
+            document = [NSKeyedUnarchiver unarchiveObjectWithFile:archiveFilePath];
         
-		if ((document != nil) && (phrase != nil)) // Set the document password
-		{
-			[document setValue:[phrase copy] forKey:@"password"];
-		}
-	}
-	@catch (NSException *exception) // Exception handling (just in case O_o)
-	{
+            if ((document != nil) && (phrase != nil)) // Set the document password
+            {
+                [document setValue:[phrase copy] forKey:@"password"];
+            }
+        }
+        @catch (NSException *exception) // Exception handling (just in case O_o)
+        {
 #ifdef DEBUG
-        NSLog(@"%s Caught %@: %@", __FUNCTION__, [exception name], [exception reason]);
+            NSLog(@"%s Caught %@: %@", __FUNCTION__, [exception name], [exception reason]);
 #endif
-	}
+        }
+    }
     
 	if (document == nil) // Unarchive failed so we create a new ReaderDocument object
 	{

@@ -33,8 +33,22 @@
 
 #import <MessageUI/MessageUI.h>
 
+
+#pragma mark Constants
+
+#define PAGING_VIEWS 3
+
+#define TOOLBAR_HEIGHT 44.0f
+#define PAGEBAR_HEIGHT 48.0f
+
+#define TAP_AREA_SIZE 48.0f
+
 @interface ReaderViewController () <UIScrollViewDelegate, UIGestureRecognizerDelegate, MFMailComposeViewControllerDelegate,
                                     ReaderMainPagebarDelegate, ReaderContentViewDelegate, ThumbsViewControllerDelegate>
+
+@property (nonatomic, strong) ReaderMainPagebar *pageBar;
+@property (nonatomic, strong) UIBarButtonItem *bookmarkButton;
+
 @end
 
 @implementation ReaderViewController
@@ -42,8 +56,6 @@
 	ReaderDocument *document;
 
 	UIScrollView *theScrollView;
-
-	ReaderMainPagebar *mainPagebar;
 
 	NSMutableDictionary *contentViews;
 
@@ -55,19 +67,6 @@
 
 	BOOL isVisible;
 }
-
-#pragma mark Constants
-
-#define PAGING_VIEWS 3
-
-#define TOOLBAR_HEIGHT 44.0f
-#define PAGEBAR_HEIGHT 48.0f
-
-#define TAP_AREA_SIZE 48.0f
-
-#pragma mark Properties
-
-@synthesize delegate;
 
 #pragma mark Support methods
 
@@ -124,10 +123,12 @@
 - (void)updateToolbarBookmarkIcon {
 	NSInteger page = [document.lastPageNumber integerValue];
 
-	BOOL bookmarked = [document.bookmarks containsIndex:page];
-
-    // TODO
-	//[mainToolbar setBookmarkState:bookmarked]; // Update
+	if ([document.bookmarks containsIndex:page]) {
+        self.bookmarkButton.image = [ReaderIcon markedIcon];
+    }
+    else {
+        self.bookmarkButton.image = [ReaderIcon notMarkedIcon];
+    }
 }
 
 - (void)showDocumentPage:(NSInteger)page {
@@ -252,7 +253,7 @@
 
 		newPageSet = nil; // Release new page set
 
-		[mainPagebar updatePagebar]; // Update the pagebar display
+		[self.pageBar updatePagebar]; // Update the pagebar display
 
 		[self updateToolbarBookmarkIcon]; // Update bookmark
 
@@ -303,8 +304,7 @@
     
     if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         self.title = document.fileName ;
-    }
-    
+    }    
     
     NSMutableArray *leftBarButtons = [NSMutableArray array];
     
@@ -317,7 +317,7 @@
     
 #if (READER_ENABLE_THUMBS == TRUE)
     
-    UIBarButtonItem *thumsButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"Reader-Thumbs"] style:UIBarButtonItemStyleBordered target:self action:@selector(thumbsButtonPressed:)];
+    UIBarButtonItem *thumsButton = [[UIBarButtonItem alloc] initWithImage:[ReaderIcon thumbsIcon] style:UIBarButtonItemStyleBordered target:self action:@selector(thumbsButtonPressed:)];
     [leftBarButtons addObject:thumsButton];
     
 #endif
@@ -328,8 +328,8 @@
     
 #if (READER_BOOKMARKS == TRUE)
     
-    UIBarButtonItem *bookmarkButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"Reader-Mark-N"] style:UIBarButtonItemStyleBordered target:self action:@selector(bookmarkButtonPressed:)];
-    [rightBarButtons addObject:bookmarkButton];
+    self.bookmarkButton = [[UIBarButtonItem alloc] initWithImage:[ReaderIcon notMarkedIcon] style:UIBarButtonItemStylePlain target:self action:@selector(bookmarkButtonPressed:)];
+    [rightBarButtons addObject:self.bookmarkButton];
     
 #endif
     
@@ -340,7 +340,7 @@
         
         // Check mail-attachement size 15MB
         if (fileSize < (unsigned long long)15728640) {
-            UIBarButtonItem *mailButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"Reader-Email"] style:UIBarButtonItemStyleBordered target:self action:@selector(mailButtonPressed:)];
+            UIBarButtonItem *mailButton = [[UIBarButtonItem alloc] initWithImage:[ReaderIcon mailIcon] style:UIBarButtonItemStyleBordered target:self action:@selector(mailButtonPressed:)];
             [rightBarButtons addObject:mailButton];
         }
     }
@@ -354,7 +354,7 @@
         Class printInteractionController = NSClassFromString(@"UIPrintInteractionController");
         
         if ((printInteractionController != nil) && [printInteractionController isPrintingAvailable]) {
-            UIBarButtonItem *printButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"Reader-Print"] style:UIBarButtonItemStyleBordered target:self action:@selector(printButtonPressed:)];
+            UIBarButtonItem *printButton = [[UIBarButtonItem alloc] initWithImage:[ReaderIcon printIcon] style:UIBarButtonItemStyleBordered target:self action:@selector(printButtonPressed:)];
             [rightBarButtons addObject:printButton];
         }
     }
@@ -362,15 +362,15 @@
 #endif
     
     self.navigationItem.rightBarButtonItems = rightBarButtons;
-    
-    
-    
 
 	assert(document != nil); // Must have a valid ReaderDocument
-
-	self.view.backgroundColor = [UIColor scrollViewTexturedBackgroundColor];
-
-	CGRect viewRect = self.view.bounds; // View controller's view bounds
+    self.view.clipsToBounds = NO;
+    
+    CGRect viewRect = CGRectMake(0.f, -self.navigationController.navigationBar.frame.size.height, self.view.bounds.size.width, self.view.bounds.size.height + self.navigationController.navigationBar.frame.size.height); // View controller's view bounds
+    
+    UIView *scrollViewBackgroundView = [[UIView alloc] initWithFrame:viewRect];
+    scrollViewBackgroundView.backgroundColor = [UIColor scrollViewTexturedBackgroundColor];
+    [self.view addSubview:scrollViewBackgroundView];
 
 	theScrollView = [[UIScrollView alloc] initWithFrame:viewRect]; // All
 
@@ -379,23 +379,21 @@
 	theScrollView.delaysContentTouches = NO;
 	theScrollView.showsVerticalScrollIndicator = NO;
 	theScrollView.showsHorizontalScrollIndicator = NO;
+	theScrollView.backgroundColor = [UIColor clearColor];
 	theScrollView.contentMode = UIViewContentModeRedraw;
 	theScrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-	theScrollView.backgroundColor = [UIColor clearColor];
 	theScrollView.userInteractionEnabled = YES;
 	theScrollView.autoresizesSubviews = NO;
 	theScrollView.delegate = self;
 
 	[self.view addSubview:theScrollView];
-	CGRect pagebarRect = viewRect;
+	CGRect pagebarRect = self.view.bounds;
 	pagebarRect.size.height = PAGEBAR_HEIGHT;
-	pagebarRect.origin.y = (viewRect.size.height - PAGEBAR_HEIGHT);
+	pagebarRect.origin.y = (self.view.bounds.size.height - PAGEBAR_HEIGHT);
 
-	mainPagebar = [[ReaderMainPagebar alloc] initWithFrame:pagebarRect document:document]; // At bottom
-
-	mainPagebar.delegate = self;
-
-	[self.view addSubview:mainPagebar];
+	self.pageBar = [[ReaderMainPagebar alloc] initWithFrame:pagebarRect document:document];
+	self.pageBar.delegate = self;
+	[self.view addSubview:self.pageBar];
 
 	UITapGestureRecognizer *singleTapOne = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingleTap:)];
 	singleTapOne.numberOfTouchesRequired = 1; singleTapOne.numberOfTapsRequired = 1; singleTapOne.delegate = self;
@@ -459,7 +457,7 @@
 	NSLog(@"%s", __FUNCTION__);
 #endif
 
-	mainPagebar = nil;
+	self.pageBar = nil;
 
 	theScrollView = nil; contentViews = nil;
 
@@ -867,12 +865,17 @@
 	if ([document.bookmarks containsIndex:page]) // Remove bookmark
 	{
         // TODO
-		//[mainToolbar setBookmarkState:NO]; [document.bookmarks removeIndex:page];
+        
+        self.bookmarkButton.image = [ReaderIcon notMarkedIcon];
+		//[mainToolbar setBookmarkState:NO];
+        [document.bookmarks removeIndex:page];
 	}
 	else // Add the bookmarked page index to the bookmarks set
 	{
         // TODO
-		//[mainToolbar setBookmarkState:YES]; [document.bookmarks addIndex:page];
+		//[mainToolbar setBookmarkState:YES];
+        self.bookmarkButton.image = [ReaderIcon markedIcon];
+        [document.bookmarks addIndex:page];
 	}
 }
 
@@ -898,7 +901,7 @@
 	[self showDocumentPage:page];
 }
 
-#pragma mark ReaderMainPagebarDelegate methods
+#pragma mark ReaderpageBarDelegate methods
 
 - (void)pagebar:(ReaderMainPagebar *)pagebar gotoPage:(NSInteger)page {
 	[self showDocumentPage:page];
@@ -924,7 +927,7 @@
 
 
 - (void)toggleVisibilityOfBars {
-    if (self.navigationController.navigationBar.hidden && mainPagebar.hidden) {
+    if (self.navigationController.navigationBar.hidden && self.pageBar.hidden) {
         [self showBars];
     }
     else {
@@ -938,10 +941,10 @@
                         options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction
                      animations:^(void) {
         self.navigationController.navigationBar.alpha = 0.f;
-        mainPagebar.alpha = 0.f;
+        self.pageBar.alpha = 0.f;
     }                completion:^(BOOL finished) {
         self.navigationController.navigationBar.hidden = YES;
-        mainPagebar.hidden = YES;
+        self.pageBar.hidden = YES;
     }];
 }
 
@@ -951,52 +954,9 @@
                      animations:^(void) {
         self.navigationController.navigationBar.hidden = NO;
         self.navigationController.navigationBar.alpha = 1.f;
-        mainPagebar.hidden = NO;
-        mainPagebar.alpha = 1.f;
+        self.pageBar.hidden = NO;
+        self.pageBar.alpha = 1.f;
     } completion:nil];
 }
-
-
-
-
-
-/*- (void)setBookmarkState:(BOOL)state
-{
-#if (READER_BOOKMARKS == TRUE) // Option
-    
-	if (state != markButton.tag) // Only if different state
-	{
-		if (self.hidden == NO) // Only if toolbar is visible
-		{
-			UIImage *image = (state ? markImageY : markImageN);
-            
-			[markButton setImage:image forState:UIControlStateNormal];
-		}
-        
-		markButton.tag = state; // Update bookmarked state tag
-	}
-    
-	if (markButton.enabled == NO) markButton.enabled = YES;
-    
-#endif // end of READER_BOOKMARKS Option
-}
-
-- (void)updateBookmarkImage
-{
-#if (READER_BOOKMARKS == TRUE) // Option
-    
-	if (markButton.tag != NSIntegerMin) // Valid tag
-	{
-		BOOL state = markButton.tag; // Bookmarked state
-        
-		UIImage *image = (state ? markImageY : markImageN);
-        
-		[markButton setImage:image forState:UIControlStateNormal];
-	}
-    
-	if (markButton.enabled == NO) markButton.enabled = YES;
-    
-#endif // end of READER_BOOKMARKS Option
-}*/
 
 @end

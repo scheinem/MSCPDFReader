@@ -43,7 +43,7 @@
 
 #pragma mark Constants
 
-#define ZOOM_LEVELS 4
+#define ZOOM_LEVELS 5
 
 #if (READER_SHOW_SHADOWS == TRUE) // Option
 	#define CONTENT_INSET 4.0f
@@ -76,6 +76,7 @@ static inline CGFloat ZoomScaleThatFits(CGSize target, CGSize source)
 - (void)updateMinimumMaximumZoom
 {
 	CGRect targetRect = CGRectInset(self.bounds, CONTENT_INSET, CONTENT_INSET);
+    targetRect.size.height -= 96.f;
 
 	CGFloat zoomScale = ZoomScaleThatFits(targetRect.size, theContentView.bounds.size);
 

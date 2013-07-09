@@ -24,10 +24,12 @@
 //
 
 #import "ReaderConstants.h"
+#import "ReaderIcon.h"
 #import "ThumbsViewController.h"
 #import "ReaderThumbRequest.h"
 #import "ReaderThumbCache.h"
 #import "ReaderDocument.h"
+#import <QuartzCore/QuartzCore.h>
 
 @interface ThumbsViewController () <ReaderThumbsViewDelegate>
 
@@ -126,8 +128,8 @@
     
 #if (READER_BOOKMARKS == TRUE) // Option
     
-    UIImage *thumbsImage = [UIImage imageNamed:@"Reader-Thumbs"];
-    UIImage *bookmarkImage = [UIImage imageNamed:@"Reader-Mark-Y"];
+    UIImage *thumbsImage = [ReaderIcon thumbsIcon];
+    UIImage *bookmarkImage = [ReaderIcon notMarkedIcon];
     NSArray *buttonItems = [NSArray arrayWithObjects:thumbsImage, bookmarkImage, nil];
     UISegmentedControl *showControl = [[UISegmentedControl alloc] initWithItems:buttonItems];
     
@@ -344,7 +346,7 @@
 
 		[imageView addSubview:tintView];
 
-		UIImage *image = [UIImage imageNamed:@"Reader-Mark-Y"];
+		UIImage *image = [ReaderIcon markedIcon];
 
 		bookMark = [[UIImageView alloc] initWithImage:image];
 
