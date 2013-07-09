@@ -144,7 +144,6 @@
 		self.userInteractionEnabled = YES;
 		self.contentMode = UIViewContentModeRedraw;
 		self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
-		self.backgroundColor = [UIColor clearColor];
 
 		CAGradientLayer *layer = (CAGradientLayer *)self.layer;
 		UIColor *liteColor = [UIColor colorWithWhite:0.32f alpha:1.f];

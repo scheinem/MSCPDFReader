@@ -76,7 +76,7 @@ static inline CGFloat ZoomScaleThatFits(CGSize target, CGSize source)
 - (void)updateMinimumMaximumZoom
 {
 	CGRect targetRect = CGRectInset(self.bounds, CONTENT_INSET, CONTENT_INSET);
-    targetRect.size.height -= 96.f;
+    //targetRect.size.height -= 96.f;
 
 	CGFloat zoomScale = ZoomScaleThatFits(targetRect.size, theContentView.bounds.size);
 

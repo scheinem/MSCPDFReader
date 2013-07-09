@@ -27,6 +27,7 @@
 
 #import "ReaderDocument.h"
 #import "ReaderIcon.h"
+#import "MSCPDFReaderNavigationController.h"
 
 @class ReaderViewController;
 

@@ -176,7 +176,7 @@
 
 	NSString *filePath = [pdfs lastObject]; assert(filePath != nil); // Path to last PDF file
 
-	ReaderDocument *document = [ReaderDocument pdfFromFilePath:filePath password:phrase];
+	ReaderDocument *document = [ReaderDocument pdfFromFilePath:filePath password:phrase ignoreStoredMetadata:NO];
 
 	if (document != nil) // Must have a valid ReaderDocument object in order to proceed with things
 	{
@@ -193,7 +193,9 @@
 		readerViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
 		readerViewController.modalPresentationStyle = UIModalPresentationFullScreen;
         
-		[self presentModalViewController:[[UINavigationController alloc] initWithRootViewController:readerViewController] animated:YES];
+        UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:readerViewController];
+        navigationController.navigationBar.translucent = YES;
+		[self presentModalViewController:navigationController animated:YES];
 
 #endif // DEMO_VIEW_CONTROLLER_PUSH
 	}

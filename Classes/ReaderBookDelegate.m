@@ -56,7 +56,7 @@
 
 	NSString *filePath = [pdfs lastObject]; assert(filePath != nil); // Path to last PDF file
 
-	ReaderDocument *document = [ReaderDocument pdfFromFilePath:filePath password:phrase];
+	ReaderDocument *document = [ReaderDocument pdfFromFilePath:filePath password:phrase ignoreStoredMetadata:NO];
 
 	if (document != nil) // Must have a valid ReaderDocument object in order to proceed
 	{

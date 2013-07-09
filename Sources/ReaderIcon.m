@@ -8,7 +8,7 @@
 
 #import "ReaderIcon.h"
 
-static BOOL brightIcons = NO;
+static BOOL brightIcons = YES;
 
 @implementation ReaderIcon
 

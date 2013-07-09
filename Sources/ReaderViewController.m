@@ -291,6 +291,8 @@
             document = object; // Retain the supplied ReaderDocument object for our use
 
 			[ReaderThumbCache touchThumbCacheWithGUID:object.guid]; // Touch the document thumb cache directory
+            
+            self.wantsFullScreenLayout = YES;
 
 			reader = self; // Return an initialized ReaderViewController object
 		}
@@ -304,7 +306,7 @@
     
     if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         self.title = document.fileName ;
-    }    
+    }
     
     NSMutableArray *leftBarButtons = [NSMutableArray array];
     
@@ -366,9 +368,18 @@
 	assert(document != nil); // Must have a valid ReaderDocument
     self.view.clipsToBounds = NO;
     
-    CGRect viewRect = CGRectMake(0.f, -self.navigationController.navigationBar.frame.size.height, self.view.bounds.size.width, self.view.bounds.size.height + self.navigationController.navigationBar.frame.size.height); // View controller's view bounds
+    
+    CGRect viewRect = CGRectNull;
+    
+    if ([UIApplication sharedApplication].statusBarStyle == UIStatusBarStyleBlackTranslucent) {
+        viewRect = CGRectMake(0.f, 0.f, self.view.bounds.size.width, self.view.bounds.size.height); // View controller's view bounds
+    }
+    else {
+        viewRect = CGRectMake(0.f, 20.f, self.view.bounds.size.width, self.view.bounds.size.height - 20.f); // View controller's view bounds
+    }
     
     UIView *scrollViewBackgroundView = [[UIView alloc] initWithFrame:viewRect];
+    scrollViewBackgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     scrollViewBackgroundView.backgroundColor = [UIColor scrollViewTexturedBackgroundColor];
     [self.view addSubview:scrollViewBackgroundView];
 
@@ -410,6 +421,11 @@
 	[singleTapOne requireGestureRecognizerToFail:doubleTapOne]; // Single tap requires double tap to fail
 
 	contentViews = [NSMutableDictionary new];
+    
+    
+    
+    self.navigationController.navigationBar.translucent = YES;
+    
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -436,6 +452,13 @@
 	[UIApplication sharedApplication].idleTimerDisabled = YES;
     
 #endif // end of READER_DISABLE_IDLE Option
+    
+    
+    // First step of customization. Still a lot to do.
+    self.pageBar.alpha = 0.7f;
+    self.pageBar.tintColor = [UIColor blackColor];
+    self.navigationController.navigationBar.tintColor = [UIColor colorWithRed:0.f green:0.f blue:0.f alpha:0.7f];
+    [self.navigationController.navigationBar setBackgroundImage:nil forBarMetrics:UIBarMetricsDefault];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -498,14 +521,14 @@
 	lastAppearSize = CGSizeZero; // Reset view size tracking
 }
 
-/*
+
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
 	//if (isVisible == NO) return; // iOS present modal bodge
 
 	//if (fromInterfaceOrientation == self.interfaceOrientation) return;
 }
-*/
+
 
 - (void)dealloc
 {
@@ -955,7 +978,7 @@
         self.navigationController.navigationBar.hidden = NO;
         self.navigationController.navigationBar.alpha = 1.f;
         self.pageBar.hidden = NO;
-        self.pageBar.alpha = 1.f;
+        self.pageBar.alpha = 0.7f;
     } completion:nil];
 }
 
