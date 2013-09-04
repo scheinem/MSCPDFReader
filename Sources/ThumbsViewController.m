@@ -123,25 +123,10 @@
 
 	self.view.backgroundColor = [UIColor scrollViewTexturedBackgroundColor];
     
+    self.navigationController.navigationBar.translucent = NO;
+    
     self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Fertig" style:UIBarButtonItemStyleBordered target:self action:@selector(doneButtonTouchedUpInside:)];
     self.title = [document.fileName stringByDeletingPathExtension];
-    
-#if (READER_BOOKMARKS == TRUE) // Option
-    
-    UIImage *thumbsImage = [ReaderIcon thumbsIcon];
-    UIImage *bookmarkImage = [ReaderIcon notMarkedIcon];
-    NSArray *buttonItems = [NSArray arrayWithObjects:thumbsImage, bookmarkImage, nil];
-    UISegmentedControl *showControl = [[UISegmentedControl alloc] initWithItems:buttonItems];
-    
-    showControl.segmentedControlStyle = UISegmentedControlStyleBar;
-    showControl.selectedSegmentIndex = 0; // Default segment index
-    
-    [showControl addTarget:self action:@selector(showControlTapped:) forControlEvents:UIControlEventValueChanged];
-    
-    UIBarButtonItem *segmentBarItem = [[UIBarButtonItem alloc] initWithCustomView:showControl];
-    self.navigationItem.rightBarButtonItem = segmentBarItem;
-    
-#endif // end of READER_BOOKMARKS Option
     
 
 	CGRect viewRect = self.view.bounds; // View controller's view bounds

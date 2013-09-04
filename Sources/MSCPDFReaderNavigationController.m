@@ -14,7 +14,6 @@
 
 @implementation MSCPDFReaderNavigationController
 
-
 - (BOOL)shouldAutorotate {
     return YES;
 }

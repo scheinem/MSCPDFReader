@@ -42,7 +42,7 @@
 
 @interface ReaderMainPagebar : UIToolbar
 
-@property (nonatomic, unsafe_unretained, readwrite) id <ReaderMainPagebarDelegate> delegate;
+@property (nonatomic, unsafe_unretained, readwrite) id<ReaderMainPagebarDelegate> delegate;
 
 - (id)initWithFrame:(CGRect)frame document:(ReaderDocument *)object;
 

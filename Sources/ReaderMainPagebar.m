@@ -29,8 +29,7 @@
 
 #import <QuartzCore/QuartzCore.h>
 
-@implementation ReaderMainPagebar
-{
+@implementation ReaderMainPagebar {
 	ReaderDocument *document;
 
 	ReaderTrackControl *trackControl;
@@ -64,26 +63,17 @@
 
 @synthesize delegate;
 
-#pragma mark ReaderMainPagebar class methods
-
-+ (Class)layerClass
-{
-	return [CAGradientLayer class];
-}
-
 #pragma mark ReaderMainPagebar instance methods
 
-- (id)initWithFrame:(CGRect)frame
-{
+- (id)initWithFrame:(CGRect)frame {
 	return [self initWithFrame:frame document:nil];
 }
 
-- (void)updatePageThumbView:(NSInteger)page
-{
+- (void)updatePageThumbView:(NSInteger)page {
 	NSInteger pages = document.pageCount;
 
-	if (pages > 1) // Only update frame if more than one page
-	{
+    // Only update frame if more than one page
+	if (pages > 1) {
 		CGFloat controlWidth = trackControl.bounds.size.width;
 
 		CGFloat useableWidth = (controlWidth - THUMB_LARGE_WIDTH);
@@ -102,8 +92,8 @@
 		}
 	}
 
-	if (page != pageThumbView.tag) // Only if page number changed
-	{
+    // Only if page number changed
+	if (page != pageThumbView.tag) {
 		pageThumbView.tag = page; [pageThumbView reuse]; // Reuse the thumb view
 
 		CGSize size = CGSizeMake(THUMB_LARGE_WIDTH, THUMB_LARGE_HEIGHT); // Maximum thumb size
@@ -118,10 +108,8 @@
 	}
 }
 
-- (void)updatePageNumberText:(NSInteger)page
-{
-	if (page != pageNumberLabel.tag) // Only if page number changed
-	{
+- (void)updatePageNumberText:(NSInteger)page {
+	if (page != pageNumberLabel.tag) {
 		NSInteger pages = document.pageCount; // Total pages
 
 		NSString *format = NSLocalizedString(@"%d of %d", @"format"); // Format
@@ -134,27 +122,14 @@
 	}
 }
 
-- (id)initWithFrame:(CGRect)frame document:(ReaderDocument *)object
-{
+- (id)initWithFrame:(CGRect)frame document:(ReaderDocument *)object {
 	assert(object != nil); // Must have a valid ReaderDocument
 
-	if ((self = [super initWithFrame:frame]))
-	{
+	if ((self = [super initWithFrame:frame])) {
 		self.autoresizesSubviews = YES;
 		self.userInteractionEnabled = YES;
 		self.contentMode = UIViewContentModeRedraw;
 		self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
-
-		CAGradientLayer *layer = (CAGradientLayer *)self.layer;
-		UIColor *liteColor = [UIColor colorWithWhite:0.32f alpha:1.f];
-		UIColor *darkColor = [UIColor colorWithWhite:0.00f alpha:0.8f];
-		layer.colors = [NSArray arrayWithObjects:(id)liteColor.CGColor, (id)darkColor.CGColor, nil];
-
-		CGRect shadowRect = self.bounds; shadowRect.size.height = 4.0f; shadowRect.origin.y -= shadowRect.size.height;
-
-		ReaderPagebarShadow *shadowView = [[ReaderPagebarShadow alloc] initWithFrame:shadowRect];
-
-		[self addSubview:shadowView]; // Add the shadow to the view
 
 		CGFloat numberY = (0.0f - (PAGE_NUMBER_HEIGHT + PAGE_NUMBER_SPACE));
 		CGFloat numberX = ((self.bounds.size.width - PAGE_NUMBER_WIDTH) / 2.0f);
@@ -210,15 +185,16 @@
 	return self;
 }
 
-- (void)removeFromSuperview
-{
-	[trackTimer invalidate]; [enableTimer invalidate];
+- (void)removeFromSuperview {
+	[trackTimer invalidate];
+    [enableTimer invalidate];
 
 	[super removeFromSuperview];
 }
 
-- (void)layoutSubviews
-{
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    
 	CGRect controlRect = CGRectInset(self.bounds, 4.0f, 0.0f);
 
 	CGFloat thumbWidth = (THUMB_SMALL_WIDTH + THUMB_SMALL_GAP);
@@ -313,56 +289,16 @@
 	];
 }
 
-- (void)updatePagebarViews
-{
+- (void)updatePagebarViews {
 	NSInteger page = [document.lastPageNumber integerValue]; // #
 
 	[self updatePageNumberText:page]; // Update page number text
-
 	[self updatePageThumbView:page]; // Update page thumb view
 }
 
-- (void)updatePagebar
-{
-	if (self.hidden == NO) // Only if visible
-	{
-		[self updatePagebarViews]; // Update views
-	}
-}
-
-- (void)hidePagebar
-{
-	if (self.hidden == NO) // Only if visible
-	{
-		[UIView animateWithDuration:0.25 delay:0.0
-			options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction
-			animations:^(void)
-			{
-				self.alpha = 0.0f;
-			}
-			completion:^(BOOL finished)
-			{
-				self.hidden = YES;
-			}
-		];
-	}
-}
-
-- (void)showPagebar
-{
-	if (self.hidden == YES) // Only if hidden
-	{
-		[self updatePagebarViews]; // Update views first
-
-		[UIView animateWithDuration:0.25 delay:0.0
-			options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction
-			animations:^(void)
-			{
-				self.hidden = NO;
-				self.alpha = 1.0f;
-			}
-			completion:NULL
-		];
+- (void)updatePagebar {
+	if (self.hidden == NO) {
+		[self updatePagebarViews];
 	}
 }
 
@@ -504,8 +440,7 @@
 
 #pragma mark UIControl subclass methods
 
-- (BOOL)beginTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event
-{
+- (BOOL)beginTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
 	CGPoint point = [touch locationInView:self]; // Touch point
 
 	_value = [self limitValue:point.x]; // Limit control value
@@ -513,10 +448,8 @@
 	return YES;
 }
 
-- (BOOL)continueTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event
-{
-	if (self.touchInside == YES) // Only if inside the control
-	{
+- (BOOL)continueTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
+	if (self.touchInside == YES) {
 		CGPoint point = [touch locationInView:touch.view]; // Touch point
 
 		CGFloat x = [self limitValue:point.x]; // Potential new control value
@@ -530,8 +463,7 @@
 	return YES;
 }
 
-- (void)endTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event
-{
+- (void)endTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event {
 	CGPoint point = [touch locationInView:self]; // Touch point
 
 	_value = [self limitValue:point.x]; // Limit control value
@@ -549,15 +481,13 @@
 
 #pragma mark ReaderPagebarThumb instance methods
 
-- (id)initWithFrame:(CGRect)frame
-{
+- (id)initWithFrame:(CGRect)frame {
 	return [self initWithFrame:frame small:NO];
 }
 
-- (id)initWithFrame:(CGRect)frame small:(BOOL)small
-{
-	if ((self = [super initWithFrame:frame])) // Superclass init
-	{
+- (id)initWithFrame:(CGRect)frame small:(BOOL)small {
+    self = [super initWithFrame:frame];
+	if (self) {
 		CGFloat value = (small ? 0.6f : 0.7f); // Size based alpha value
 
 		UIColor *background = [UIColor colorWithWhite:0.8f alpha:value];
@@ -567,44 +497,6 @@
 		imageView.layer.borderColor = [UIColor colorWithWhite:0.4f alpha:0.6f].CGColor;
 
 		imageView.layer.borderWidth = 1.0f; // Give the thumb image view a border
-	}
-
-	return self;
-}
-
-@end
-
-#pragma mark -
-
-//
-//	ReaderPagebarShadow class implementation
-//
-
-@implementation ReaderPagebarShadow
-
-#pragma mark ReaderPagebarShadow class methods
-
-+ (Class)layerClass
-{
-	return [CAGradientLayer class];
-}
-
-#pragma mark ReaderPagebarShadow instance methods
-
-- (id)initWithFrame:(CGRect)frame
-{
-	if ((self = [super initWithFrame:frame]))
-	{
-		self.autoresizesSubviews = NO;
-		self.userInteractionEnabled = NO;
-		self.contentMode = UIViewContentModeRedraw;
-		self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-		self.backgroundColor = [UIColor clearColor];
-
-		CAGradientLayer *layer = (CAGradientLayer *)self.layer;
-		UIColor *blackColor = [UIColor colorWithWhite:0.42f alpha:1.0f];
-		UIColor *clearColor = [UIColor colorWithWhite:0.42f alpha:0.0f];
-		layer.colors = [NSArray arrayWithObjects:(id)clearColor.CGColor, (id)blackColor.CGColor, nil];
 	}
 
 	return self;
