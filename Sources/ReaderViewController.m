@@ -47,6 +47,8 @@
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) NSMutableDictionary *contentViews;
 
+@property (nonatomic, assign) BOOL statutsBarHidden;
+
 @end
 
 @implementation ReaderViewController
@@ -58,6 +60,7 @@
 - (id)initWithReaderDocument:(ReaderDocument *)object {
 	self = [super initWithNibName:nil bundle:nil];
 	if (self) {
+        _statutsBarHidden = NO;
         self.document = object;
         
         [ReaderThumbCache touchThumbCacheWithGUID:object.guid]; // Touch the document thumb cache directory
@@ -77,7 +80,7 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
     
-    self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds]; // All
+    self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
     
 	self.scrollView.scrollsToTop = NO;
 	self.scrollView.pagingEnabled = YES;
@@ -148,12 +151,6 @@
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
     
-	if (CGSizeEqualToSize(self.scrollView.contentSize, CGSizeZero)) {
-		[self showDocumentPage:[self.document.lastPageNumber integerValue]];
-        
-        self.document.lastOpen = [NSDate date];
-	}
-    
     [self updateScrollViews];
     
 #if (READER_DISABLE_IDLE == TRUE) // Option
@@ -163,10 +160,14 @@
 #endif // end of READER_DISABLE_IDLE Option
 }
 
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    
+    [self showDocumentPage:[self.document.lastPageNumber integerValue]];
+}
+
 - (void)viewWillDisappear:(BOOL)animated {
 	[super viewWillDisappear:animated];
-    
-    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
     
 #if (READER_DISABLE_IDLE == TRUE)
     
@@ -187,8 +188,12 @@
 	[self updateScrollViews];
 }
 
+- (UIStatusBarAnimation)preferredStatusBarUpdateAnimation {
+    return UIStatusBarAnimationSlide;
+}
+
 - (BOOL)prefersStatusBarHidden {
-    return YES;
+    return self.statutsBarHidden;
 }
 
 - (void)dealloc {
@@ -460,10 +465,11 @@
 }
 
 - (void)hideBars {
+    self.statutsBarHidden = YES;
     [UIView animateWithDuration:0.25 delay:0.0
                         options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction
                      animations:^(void) {
-                         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
+                         [self setNeedsStatusBarAppearanceUpdate];
                          self.navigationController.navigationBar.alpha = 0.f;
                          self.pageBar.alpha = 0.f;
                      }                completion:^(BOOL finished) {
@@ -473,24 +479,26 @@
 }
 
 - (void)showBars {
+    self.navigationController.navigationBar.hidden = NO;
+    self.pageBar.hidden = NO;
+    self.statutsBarHidden = NO;
     [UIView animateWithDuration:0.25 delay:0.0
                         options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction
                      animations:^(void) {
-                         [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
-                         self.navigationController.navigationBar.hidden = NO;
+                         [self setNeedsStatusBarAppearanceUpdate];
                          self.navigationController.navigationBar.alpha = 1.f;
-                         self.pageBar.hidden = NO;
                          self.pageBar.alpha = 1.f;
                      } completion:nil];
 }
 
 - (void)updateScrollViews {
-	[self updateScrollViewContentSize]; // Update the content size
+	[self updateScrollViewContentSize];
     
 	NSMutableIndexSet *pageSet = [NSMutableIndexSet indexSet];
     
 	[self.contentViews enumerateKeysAndObjectsUsingBlock:^(id key, id object, BOOL *stop) {
-        ReaderContentView *contentView = object; [pageSet addIndex:contentView.tag];
+        ReaderContentView *contentView = object;
+        [pageSet addIndex:contentView.tag];
     }];
     
 	__block CGRect viewRect = CGRectZero;
@@ -561,7 +569,8 @@
         
 		NSMutableDictionary *unusedViews = [self.contentViews mutableCopy];
         
-		CGRect viewRect = CGRectZero; viewRect.size = self.scrollView.bounds.size;
+		CGRect viewRect = CGRectZero;
+        viewRect.size = self.scrollView.bounds.size;
         
 		for (NSInteger number = minValue; number <= maxValue; number++) {
 			NSNumber *key = [NSNumber numberWithInteger:number]; // # key
