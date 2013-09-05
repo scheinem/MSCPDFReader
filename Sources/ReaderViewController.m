@@ -41,6 +41,8 @@
 @property (nonatomic, strong) ReaderMainPagebar *pageBar;
 @property (nonatomic, strong) ReaderDocument *document;
 
+@property (nonatomic, strong) UIActivityViewController *activityViewController;
+
 @property (nonatomic, assign) NSInteger currentPage;
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) NSMutableDictionary *contentViews;
@@ -102,36 +104,9 @@
     
     self.navigationItem.leftBarButtonItems = leftBarButtons;
     
-    
-    NSMutableArray *rightBarButtons = [NSMutableArray array];
-    
-#if (READER_ENABLE_MAIL == TRUE)
-    
-    if ([MFMailComposeViewController canSendMail] == YES) {
-        unsigned long long fileSize = self.document.fileSize;
-        
-        // Check mail-attachement size 15MB
-        if (fileSize < (unsigned long long)15728640) {
-            UIBarButtonItem *mailButton = [[UIBarButtonItem alloc] initWithImage:[ReaderIcon mailIcon] style:UIBarButtonItemStyleBordered target:self action:@selector(mailButtonPressed:)];
-            [rightBarButtons addObject:mailButton];
-        }
-    }
-    
-#endif
-    
-#if (READER_ENABLE_PRINT == FALSE)
-    
-    // We can only print documents without passwords
-    if (self.document.password == nil)  {
-        if ([UIPrintInteractionController isPrintingAvailable]) {
-            UIBarButtonItem *printButton = [[UIBarButtonItem alloc] initWithImage:[ReaderIcon printIcon] style:UIBarButtonItemStyleBordered target:self action:@selector(printButtonPressed:)];
-            [rightBarButtons addObject:printButton];
-        }
-    }
-    
-#endif
-    
-    self.navigationItem.rightBarButtonItems = rightBarButtons;
+    UIBarButtonItem *actionButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(actionButtonPressed:)];
+    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[@"Test", self.document.fileURL] applicationActivities:nil];
+    self.navigationItem.rightBarButtonItems = @[actionButton];
 	
 	CGRect pagebarRect = self.view.bounds;
 	pagebarRect.size.height = 49.f;
@@ -191,6 +166,8 @@
 - (void)viewWillDisappear:(BOOL)animated {
 	[super viewWillDisappear:animated];
     
+    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
+    
 #if (READER_DISABLE_IDLE == TRUE)
     
 	[UIApplication sharedApplication].idleTimerDisabled = NO;
@@ -208,6 +185,10 @@
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration {
 	[self updateScrollViews];
+}
+
+- (BOOL)prefersStatusBarHidden {
+    return YES;
 }
 
 - (void)dealloc {
@@ -464,65 +445,8 @@
 	[self presentViewController:thumbsViewNavigationController animated:YES completion:nil];
 }
 
-- (void)printButtonPressed:(UIBarButtonItem *)printButton {
-	if ([UIPrintInteractionController isPrintingAvailable]) {
-		NSURL *fileURL = self.document.fileURL; // Document file URL
-        
-		if ([UIPrintInteractionController canPrintURL:fileURL]) {
-			UIPrintInfo *printInfo = [UIPrintInfo printInfo];
-            
-			printInfo.duplex = UIPrintInfoDuplexLongEdge;
-			printInfo.outputType = UIPrintInfoOutputGeneral;
-			printInfo.jobName = self.document.fileName;
-            
-            UIPrintInteractionController *printInteraction = [UIPrintInteractionController sharedPrintController];
-			printInteraction.printInfo = printInfo;
-			printInteraction.printingItem = fileURL;
-			printInteraction.showsPageRange = YES;
-            
-			if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
-				[printInteraction presentFromBarButtonItem:printButton animated:YES completionHandler:nil];
-			}
-			else {
-				[printInteraction presentAnimated:YES completionHandler:nil];
-			}
-		}
-	}
-}
-
-- (void)mailButtonPressed:(UIBarButtonItem *)mailButton {
-    
-	if ([MFMailComposeViewController canSendMail] == NO) return;
-    
-	if (self.presentedViewController.isBeingPresented) {
-        [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
-    }
-    
-	unsigned long long fileSize = self.document.fileSize;
-    
-    // Check attachment size limit (15MB)
-	if (fileSize < (unsigned long long)15728640) {
-		NSURL *fileURL = self.document.fileURL;
-        NSString *fileName = self.document.fileName; // Document
-        
-		NSData *attachment = [NSData dataWithContentsOfURL:fileURL options:(NSDataReadingMapped|NSDataReadingUncached) error:nil];
-        
-		if (attachment) {
-			MFMailComposeViewController *mailComposer = [MFMailComposeViewController new];
-            mailComposer.view.tintColor = self.view.tintColor;
-            
-			[mailComposer addAttachmentData:attachment mimeType:@"application/pdf" fileName:fileName];
-            
-			[mailComposer setSubject:fileName]; // Use the document file name for the subject
-            
-			mailComposer.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
-			mailComposer.modalPresentationStyle = UIModalPresentationFormSheet;
-            
-			mailComposer.mailComposeDelegate = self; // Set the delegate
-            
-			[self presentViewController:mailComposer animated:YES completion:nil];
-		}
-	}
+- (void)actionButtonPressed:(UIBarButtonItem *)mailButton {
+    [self presentViewController:self.activityViewController animated:YES completion:nil];
 }
 
 
@@ -539,6 +463,7 @@
     [UIView animateWithDuration:0.25 delay:0.0
                         options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction
                      animations:^(void) {
+                         [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
                          self.navigationController.navigationBar.alpha = 0.f;
                          self.pageBar.alpha = 0.f;
                      }                completion:^(BOOL finished) {
@@ -551,6 +476,7 @@
     [UIView animateWithDuration:0.25 delay:0.0
                         options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction
                      animations:^(void) {
+                         [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationFade];
                          self.navigationController.navigationBar.hidden = NO;
                          self.navigationController.navigationBar.alpha = 1.f;
                          self.pageBar.hidden = NO;
