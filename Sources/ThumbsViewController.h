@@ -36,8 +36,6 @@
 
 - (void)thumbsViewController:(ThumbsViewController *)viewController gotoPage:(NSInteger)page;
 
-- (void)dismissThumbsViewController:(ThumbsViewController *)viewController;
-
 @end
 
 @interface ThumbsViewController : UIViewController
@@ -59,7 +57,5 @@
 - (CGSize)maximumContentSize;
 
 - (void)showText:(NSString *)text;
-
-- (void)showBookmark:(BOOL)show;
 
 @end

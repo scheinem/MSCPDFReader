@@ -27,15 +27,12 @@
 #import "CGPDFDocument.h"
 #import <fcntl.h>
 
-@implementation ReaderDocument
-{
+@implementation ReaderDocument {
 	NSString *_guid;
     
 	NSDate *_lastOpen;
     
 	NSNumber *_lastPageNumber;
-    
-	NSMutableIndexSet *_bookmarks;
     
 	NSString *_password;
     
@@ -151,8 +148,6 @@
         
         _password = [phrase copy]; // Keep copy of any document password
         
-        _bookmarks = [NSMutableIndexSet new]; // Bookmarked pages index set
-        
         _lastPageNumber = [NSNumber numberWithInteger:1]; // Start on page 1
         
         _fileURL = [NSURL fileURLWithPath:fullFilePath];
@@ -178,8 +173,6 @@
     
 	[encoder encodeObject:_lastPageNumber forKey:@"PageNumber"];
     
-	[encoder encodeObject:_bookmarks forKey:@"Bookmarks"];
-    
 	[encoder encodeObject:_lastOpen forKey:@"LastOpen"];
 }
 
@@ -191,16 +184,11 @@
         
 		_lastPageNumber = [decoder decodeObjectForKey:@"PageNumber"];
         
-		_bookmarks = [decoder decodeObjectForKey:@"Bookmarks"];
-        
 		_lastOpen = [decoder decodeObjectForKey:@"LastOpen"];
         
-		if (_guid == nil) _guid = [ReaderDocument GUID];
-        
-		if (_bookmarks != nil)
-			_bookmarks = [_bookmarks mutableCopy];
-		else
-			_bookmarks = [NSMutableIndexSet new];
+		if (!_guid) {
+            _guid = [ReaderDocument GUID];
+        }
 	}
     
 	return self;

@@ -96,20 +96,16 @@
     
     [self.view addSubview:self.scrollView];
     
+    NSMutableArray *rightBarButtons = [NSMutableArray array];
     
-    NSMutableArray *leftBarButtons = [NSMutableArray array];
-    
-    UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Done", @"button") style:UIBarButtonItemStyleBordered target:self action:@selector(doneButtonPressed:)];
-    [leftBarButtons addObject:doneButton];
-    
-    UIBarButtonItem *thumsButton = [[UIBarButtonItem alloc] initWithImage:[ReaderIcon thumbsIcon] style:UIBarButtonItemStyleBordered target:self action:@selector(thumbsButtonPressed:)];
-    [leftBarButtons addObject:thumsButton];
-    
-    self.navigationItem.leftBarButtonItems = leftBarButtons;
+    UIBarButtonItem *thumbsButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"ThumbsBarButton.png"] style:UIBarButtonItemStyleBordered target:self action:@selector(thumbsButtonPressed:)];
+    [rightBarButtons addObject:thumbsButton];
     
     UIBarButtonItem *actionButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(actionButtonPressed:)];
-    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[@"Test", self.document.fileURL] applicationActivities:nil];
-    self.navigationItem.rightBarButtonItems = @[actionButton];
+    self.activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[self.document.fileURL] applicationActivities:nil];
+    [rightBarButtons addObject:actionButton];
+    
+    self.navigationItem.rightBarButtonItems = rightBarButtons;
 	
 	CGRect pagebarRect = self.view.bounds;
 	pagebarRect.size.height = 49.f;
@@ -150,6 +146,16 @@
 
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
+    
+    
+    
+    if (self.navigationController.viewControllers.count == 1) {
+        UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Fertig" style:UIBarButtonItemStyleDone target:self action:@selector(doneButtonPressed:)];
+        self.navigationItem.leftBarButtonItem = doneButton;
+    }
+    else {
+        self.navigationItem.leftBarButtonItem = nil;
+    }
     
     [self updateScrollViews];
     
@@ -443,7 +449,7 @@
     
 	thumbsViewController.delegate = self;
     
-	thumbsViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+	thumbsViewController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
     
     UINavigationController *thumbsViewNavigationController = [[UINavigationController alloc] initWithRootViewController:thumbsViewController];
     
@@ -583,7 +589,8 @@
                 
 				contentView = [[ReaderContentView alloc] initWithFrame:viewRect fileURL:fileURL page:number password:phrase];
                 
-				[self.scrollView addSubview:contentView]; [self.contentViews setObject:contentView forKey:key];
+				[self.scrollView addSubview:contentView];
+                [self.contentViews setObject:contentView forKey:key];
                 
 				contentView.message = self; [newPageSet addIndex:number];
 			}

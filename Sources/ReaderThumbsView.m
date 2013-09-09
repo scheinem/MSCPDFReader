@@ -396,33 +396,6 @@
 	[self flashScrollIndicators];
 }
 
-- (void)refreshThumbWithIndex:(NSInteger)index
-{
-	for (ReaderThumbView *tvCell in thumbCellsVisible) // Enumerate visible cells
-	{
-		if (tvCell.tag == index) // Found a visible thumb cell with the index value
-		{
-			if ([delegate respondsToSelector:@selector(thumbsView:refreshThumbCell:forIndex:)])
-			{
-				[delegate thumbsView:self refreshThumbCell:tvCell forIndex:index]; // Refresh
-			}
-
-			break;
-		}
-	}
-}
-
-- (void)refreshVisibleThumbs
-{
-	for (ReaderThumbView *tvCell in thumbCellsVisible) // Enumerate visible cells
-	{
-		if ([delegate respondsToSelector:@selector(thumbsView:refreshThumbCell:forIndex:)])
-		{
-			[delegate thumbsView:self refreshThumbCell:tvCell forIndex:tvCell.tag]; // Refresh
-		}
-	}
-}
-
 - (CGPoint)insetContentOffset
 {
 	CGPoint insetContentOffset = self.contentOffset; // Offset

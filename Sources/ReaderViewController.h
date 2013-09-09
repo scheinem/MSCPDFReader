@@ -23,25 +23,10 @@
 //	CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#import <UIKit/UIKit.h>
-
 #import "ReaderDocument.h"
-#import "ReaderIcon.h"
 #import "MSCPDFReaderNavigationController.h"
 
-@class ReaderViewController;
-
-@protocol ReaderViewControllerDelegate <NSObject>
-
-@optional // Delegate protocols
-
-- (void)dismissReaderViewController:(ReaderViewController *)viewController;
-
-@end
-
 @interface ReaderViewController : UIViewController
-
-@property (nonatomic, unsafe_unretained, readwrite) id <ReaderViewControllerDelegate> delegate;
 
 - (id)initWithReaderDocument:(ReaderDocument *)object;
 

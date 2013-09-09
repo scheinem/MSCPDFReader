@@ -24,7 +24,6 @@
 //
 
 #import "ReaderConstants.h"
-#import "ReaderIcon.h"
 #import "ThumbsViewController.h"
 #import "ReaderThumbRequest.h"
 #import "ReaderThumbCache.h"
@@ -41,56 +40,17 @@
     
 	ReaderThumbsView *theThumbsView;
     
-	NSMutableArray *bookmarked;
-    
 	CGPoint thumbsOffset;
 	CGPoint markedOffset;
-    
-	BOOL updateBookmarked;
-	BOOL showBookmarked;
 }
 
 #pragma mark Properties
 
 @synthesize delegate;
 
-
-
-
 - (void)doneButtonTouchedUpInside:(UIBarButtonItem *)doneButton {
     [self dismissViewControllerAnimated:YES completion:^{
     }];
-}
-
-- (void)showControlTapped:(UISegmentedControl *)control {
-	switch (control.selectedSegmentIndex) {
-		case 0: {
-			showBookmarked = NO;
-			markedOffset = [theThumbsView insetContentOffset];
-			[theThumbsView reloadThumbsContentOffset:thumbsOffset];
-			break;
-		}
-            
-		case 1: {
-			showBookmarked = YES;
-			thumbsOffset = [theThumbsView insetContentOffset];
-            
-			if (updateBookmarked == YES) {
-				[bookmarked removeAllObjects];
-                
-				[document.bookmarks enumerateIndexesUsingBlock:
-                 ^(NSUInteger page, BOOL *stop){
-                     [bookmarked addObject:[NSNumber numberWithInteger:page]];
-                 }];
-                
-				markedOffset = CGPointZero; updateBookmarked = NO; // Reset
-			}
-            
-			[theThumbsView reloadThumbsContentOffset:markedOffset];
-            
-			break;
-		}
-	}
 }
 
 #pragma mark UIViewController methods
@@ -112,20 +72,15 @@
     
     self.navigationController.navigationBar.translucent = NO;
     
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Fertig" style:UIBarButtonItemStyleBordered target:self action:@selector(doneButtonTouchedUpInside:)];
-    self.title = [document.fileName stringByDeletingPathExtension];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Fertig" style:UIBarButtonItemStyleDone target:self action:@selector(doneButtonTouchedUpInside:)];
     
-    
-	CGRect viewRect = self.view.bounds; // View controller's view bounds
-    
+	CGRect viewRect = self.view.bounds;
 	CGRect thumbsRect = viewRect; UIEdgeInsets insets = UIEdgeInsetsZero;
-    
-	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
-	{
-		thumbsRect.origin.y += 40.f; thumbsRect.size.height -= 0.f;
+	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+		thumbsRect.origin.y += 40.f;
+        thumbsRect.size.height -= 0.f;
 	}
-	else // Set UIScrollView insets for non-UIUserInterfaceIdiomPad case
-	{
+	else {
 		insets.top = 40.f;
 	}
     
@@ -158,7 +113,7 @@
 #pragma mark UIThumbsViewDelegate methods
 
 - (NSUInteger)numberOfThumbsInThumbsView:(ReaderThumbsView *)thumbsView {
-	return (showBookmarked ? bookmarked.count : document.pageCount);
+	return document.pageCount;
 }
 
 - (id)thumbsView:(ReaderThumbsView *)thumbsView thumbCellWithFrame:(CGRect)frame {
@@ -168,42 +123,29 @@
 - (void)thumbsView:(ReaderThumbsView *)thumbsView updateThumbCell:(ThumbsPageThumb *)thumbCell forIndex:(NSInteger)index {
 	CGSize size = [thumbCell maximumContentSize]; // Get the cell's maximum content size
     
-	NSInteger page = (showBookmarked ? [[bookmarked objectAtIndex:index] integerValue] : (index + 1));
+	NSInteger page = index + 1;
     
-	[thumbCell showText:[NSString stringWithFormat:@"%d", page]]; // Page number place holder
+	[thumbCell showText:[NSString stringWithFormat:@"%d", page]];
     
-	[thumbCell showBookmark:[document.bookmarks containsIndex:page]]; // Show bookmarked status
-    
-	NSURL *fileURL = document.fileURL; NSString *guid = document.guid; NSString *phrase = document.password; // Document info
-    
-	ReaderThumbRequest *thumbRequest = [ReaderThumbRequest newForView:thumbCell fileURL:fileURL password:phrase guid:guid page:page size:size];
+	ReaderThumbRequest *thumbRequest = [ReaderThumbRequest newForView:thumbCell
+                                                              fileURL:document.fileURL
+                                                             password:document.password
+                                                                 guid:document.guid
+                                                                 page:page
+                                                                 size:size];
     
 	UIImage *image = [[ReaderThumbCache sharedInstance] thumbRequest:thumbRequest priority:YES]; // Request the thumbnail
     
 	if ([image isKindOfClass:[UIImage class]]) [thumbCell showImage:image]; // Show image from cache
 }
 
-- (void)thumbsView:(ReaderThumbsView *)thumbsView refreshThumbCell:(ThumbsPageThumb *)thumbCell forIndex:(NSInteger)index {
-	NSInteger page = (showBookmarked ? [[bookmarked objectAtIndex:index] integerValue] : (index + 1));
-    
-	[thumbCell showBookmark:[document.bookmarks containsIndex:page]]; // Show bookmarked status
-}
-
 - (void)thumbsView:(ReaderThumbsView *)thumbsView didSelectThumbWithIndex:(NSInteger)index {
-	NSInteger page = (showBookmarked ? [[bookmarked objectAtIndex:index] integerValue] : (index + 1));
+	NSInteger page = index + 1;
     
 	[delegate thumbsViewController:self gotoPage:page]; // Show the selected page
     
     [self dismissViewControllerAnimated:YES completion:^{
     }];
-}
-
-- (void)thumbsView:(ReaderThumbsView *)thumbsView didPressThumbWithIndex:(NSInteger)index {
-	NSInteger page = (showBookmarked ? [[bookmarked objectAtIndex:index] integerValue] : (index + 1));
-    
-	if ([document.bookmarks containsIndex:page]) [document.bookmarks removeIndex:page]; else [document.bookmarks addIndex:page];
-    
-	updateBookmarked = YES; [thumbsView refreshThumbWithIndex:index]; // Refresh page thumb
 }
 
 @end
@@ -346,30 +288,12 @@
 #endif // end of READER_SHOW_SHADOWS Option
 }
 
-- (void)showBookmark:(BOOL)show
-{
-	bookMark.hidden = (show ? NO : YES);
-}
-
-- (void)showTouched:(BOOL)touched
-{
+- (void)showTouched:(BOOL)touched {
 	tintView.hidden = (touched ? NO : YES);
 }
 
-- (void)showText:(NSString *)text
-{
+- (void)showText:(NSString *)text {
 	textLabel.text = text;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 @end

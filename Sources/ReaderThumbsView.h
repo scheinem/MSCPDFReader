@@ -41,9 +41,7 @@
 
 - (void)thumbsView:(ReaderThumbsView *)thumbsView didSelectThumbWithIndex:(NSInteger)index;
 
-@optional // Delegate protocols
-
-- (void)thumbsView:(ReaderThumbsView *)thumbsView refreshThumbCell:(id)thumbCell forIndex:(NSInteger)index;
+@optional
 
 - (void)thumbsView:(ReaderThumbsView *)thumbsView didPressThumbWithIndex:(NSInteger)index;
 
@@ -58,8 +56,6 @@
 - (void)reloadThumbsCenterOnIndex:(NSInteger)index;
 
 - (void)reloadThumbsContentOffset:(CGPoint)newContentOffset;
-
-- (void)refreshThumbWithIndex:(NSInteger)index;
 
 - (void)refreshVisibleThumbs;
 
