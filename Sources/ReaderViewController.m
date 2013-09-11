@@ -195,6 +195,19 @@
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration {
 	[self updateScrollViews];
+    if (self.navigationController.navigationBar.hidden) {
+        
+        CGRect rect = self.navigationController.navigationBar.frame;
+        rect.origin.y = -rect.size.height;
+        self.navigationController.navigationBar.frame = rect;
+        
+        [UIView animateWithDuration:duration animations:^{
+            CGRect rect = self.scrollView.frame;
+            rect.origin.y = 0.f;
+            rect.size.height = self.pageBar.frame.origin.y;
+            self.scrollView.frame = rect;
+        }];
+    }
 }
 
 - (UIStatusBarAnimation)preferredStatusBarUpdateAnimation {
