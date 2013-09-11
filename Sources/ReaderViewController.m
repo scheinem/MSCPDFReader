@@ -528,8 +528,8 @@
                          self.navigationController.navigationBar.frame = rect;
                          
                          rect = self.scrollView.frame;
-                         rect.origin.y += self.navigationController.navigationBar.frame.size.height;
-                         rect.size.height -= (self.pageBar.frame.size.height + self.navigationController.navigationBar.frame.size.height);
+                         rect.origin.y = 0.f;
+                         rect.size.height = self.pageBar.frame.origin.y;
                          self.scrollView.frame = rect;
                          
                          for (UIView *view in self.contentViews.allValues) {self.navigationController.interactivePopGestureRecognizer.enabled = NO;
