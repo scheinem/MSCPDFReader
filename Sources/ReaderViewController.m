@@ -80,7 +80,7 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
     
-    self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
+    self.scrollView = [[UIScrollView alloc] initWithFrame:(CGRect){CGPointZero, {self.view.bounds.size.width, self.view.bounds.size.height - 49.f}}];
     
 	self.scrollView.scrollsToTop = NO;
 	self.scrollView.pagingEnabled = YES;
@@ -147,7 +147,7 @@
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
     
-    
+    self.navigationController.interactivePopGestureRecognizer.enabled = NO;
     
     if (self.navigationController.viewControllers.count == 1) {
         UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithTitle:@"Fertig" style:UIBarButtonItemStyleDone target:self action:@selector(doneButtonPressed:)];
@@ -174,6 +174,9 @@
 
 - (void)viewWillDisappear:(BOOL)animated {
 	[super viewWillDisappear:animated];
+    
+    self.navigationController.interactivePopGestureRecognizer.enabled = YES;
+    self.navigationController.navigationBar.hidden = NO;
     
 #if (READER_DISABLE_IDLE == TRUE)
     
@@ -460,9 +463,8 @@
     [self presentViewController:self.activityViewController animated:YES completion:nil];
 }
 
-
 - (void)toggleVisibilityOfBars {
-    if (self.navigationController.navigationBar.hidden && self.pageBar.hidden) {
+    if (self.statutsBarHidden) {
         [self showBars];
     }
     else {
@@ -472,29 +474,74 @@
 
 - (void)hideBars {
     self.statutsBarHidden = YES;
-    [UIView animateWithDuration:0.25 delay:0.0
-                        options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction
+    
+    [UIView animateWithDuration:UINavigationControllerHideShowBarDuration delay:0.
+                        options:UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionLayoutSubviews
                      animations:^(void) {
                          [self setNeedsStatusBarAppearanceUpdate];
-                         self.navigationController.navigationBar.alpha = 0.f;
+                         
+                         CGRect rect = self.pageBar.frame;
+                         rect.origin.y += rect.size.height;
+                         self.pageBar.frame = rect;
+                         
+                         rect = self.navigationController.navigationBar.frame;
+                         rect.origin.y = - rect.size.height;
+                         self.navigationController.navigationBar.frame = rect;
+                         
+                         rect = self.scrollView.frame;
+                         rect.origin.y = -self.navigationController.navigationBar.frame.size.height;
+                         rect.size.height += self.pageBar.frame.size.height + self.navigationController.navigationBar.frame.size.height;
+                         self.scrollView.frame = rect;
+                         
+                         for (UIView *view in self.contentViews.allValues) {
+                             CGRect rect = view.frame;
+                             rect.size = self.scrollView.frame.size;
+                             view.frame = rect;
+                         }
+                         
                          self.pageBar.alpha = 0.f;
-                     }                completion:^(BOOL finished) {
-                         self.navigationController.navigationBar.hidden = YES;
+                     }
+                     completion:^(BOOL finished) {
                          self.pageBar.hidden = YES;
+                         self.navigationController.navigationBar.hidden = YES;
                      }];
 }
 
 - (void)showBars {
-    self.navigationController.navigationBar.hidden = NO;
     self.pageBar.hidden = NO;
     self.statutsBarHidden = NO;
-    [UIView animateWithDuration:0.25 delay:0.0
-                        options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction
+    self.navigationController.navigationBar.hidden = NO;
+    
+    [UIView animateWithDuration:UINavigationControllerHideShowBarDuration delay:0.
+                        options:UIViewAnimationOptionCurveEaseIn | UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionLayoutSubviews
                      animations:^(void) {
                          [self setNeedsStatusBarAppearanceUpdate];
-                         self.navigationController.navigationBar.alpha = 1.f;
+                         
+                         CGRect rect = self.pageBar.frame;
+                         rect.origin.y -= rect.size.height;
+                         self.pageBar.frame = rect;
+                         
+                         rect = self.navigationController.navigationBar.frame;
+                         
+                         CGFloat statusBarHeight = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation) ? [UIApplication sharedApplication].statusBarFrame.size.width : [UIApplication sharedApplication].statusBarFrame.size.height;
+                         rect.origin.y = statusBarHeight;
+                         self.navigationController.navigationBar.frame = rect;
+                         
+                         rect = self.scrollView.frame;
+                         rect.origin.y += self.navigationController.navigationBar.frame.size.height;
+                         rect.size.height -= (self.pageBar.frame.size.height + self.navigationController.navigationBar.frame.size.height);
+                         self.scrollView.frame = rect;
+                         
+                         for (UIView *view in self.contentViews.allValues) {self.navigationController.interactivePopGestureRecognizer.enabled = NO;
+                             CGRect rect = view.frame;
+                             rect.size = self.scrollView.frame.size;
+                             view.frame = rect;
+                         }
+                         
                          self.pageBar.alpha = 1.f;
-                     } completion:nil];
+                     }
+                     completion:^(BOOL finished) {
+                     }];
 }
 
 - (void)updateScrollViews {
@@ -592,7 +639,9 @@
 				[self.scrollView addSubview:contentView];
                 [self.contentViews setObject:contentView forKey:key];
                 
-				contentView.message = self; [newPageSet addIndex:number];
+				contentView.message = self;
+                
+                [newPageSet addIndex:number];
 			}
 			else {
 				contentView.frame = viewRect;
