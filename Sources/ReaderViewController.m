@@ -196,7 +196,10 @@
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration {
 	[self updateScrollViews];
     if (self.navigationController.navigationBar.hidden) {
-        
+        [self showBars];
+        /*
+         * Temporarly disabled because it's not fully working
+         
         CGRect rect = self.navigationController.navigationBar.frame;
         rect.origin.y = -rect.size.height;
         self.navigationController.navigationBar.frame = rect;
@@ -206,7 +209,7 @@
             rect.origin.y = 0.f;
             rect.size.height = self.pageBar.frame.origin.y;
             self.scrollView.frame = rect;
-        }];
+        }];*/
     }
 }
 
